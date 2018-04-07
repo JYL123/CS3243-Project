@@ -6,10 +6,10 @@ import java.util.stream.Stream;
 public class PlayerSkeleton {
 
 	//implement this function to have a working system
-	public int pickMove(State s, int[][] legalMoves) {
+	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
 		// This should eventually be learned by our genetic algorithm
-		double[] weights = {100, -1, 1};
+		//double[] weights = {100, -1, 1};
 
 		// Pick the move with highest valuation
 		// We should implement minimax for better moves
@@ -29,7 +29,7 @@ public class PlayerSkeleton {
 		return move;
 	}
 
-	private static double evaluate(SerializedState s, double[] weights) {
+	public static double evaluate(SerializedState s, double[] weights) {
 		if (s.lost) {
 			return Double.NEGATIVE_INFINITY;
 		}
@@ -79,7 +79,7 @@ public class PlayerSkeleton {
 		}
 	}
 
-	private SerializedState transition(State s, int[] move) {
+	public SerializedState transition(State s, int[] move) {
 		int nextPiece = s.getNextPiece();
 		int orient = move[0];
 		int slot = move[1];
@@ -172,8 +172,9 @@ public class PlayerSkeleton {
 		State s = new State();
 		new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();
+		double[] weights = {100, -1, 1};
 		while(!s.hasLost()) {
-			s.makeMove(p.pickMove(s,s.legalMoves()));
+			s.makeMove(p.pickMove(s,s.legalMoves(), weights));
 			s.draw();
 			s.drawNext(0,0);
 			try {

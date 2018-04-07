@@ -1,25 +1,21 @@
-import java.util.Random;
-
 /* class for weights */
 public class Genome {
 
     private int id;
     /*weights for each feature, it is initialized randomly*/
-    private double holesWeight = Math.random();
-    private double highestColWeight = Math.random(); //height of highest column
-    private double lowestColWeight = Math.random();
-    private double islandWeight = Math.random();
-    private double parityWeight = Math.random();
-    private double edgeHeightWeight = Math.random();
-    private double blockadeWeight = Math.random();
-    private double heightDifferenceWeight = Math.abs(highestColWeight - lowestColWeight);
+    private double holesWeight = -1 * Math.random();
+    private double islandWeight = 1 * Math.random();
+    private double parityWeight = 1 * Math.random();
+    private double edgeHeightWeight = -1 * Math.random();
+    private double blockadeWeight = 100 * Math.random();
+    private double heightDifferenceWeight = 1 * Math.random();
 
     public Genome(int id) {
         this.id = id;
     }
 
-    public Genome (int id, double heightDifferenceWeight, double holesWeight, double islandWeight,
-                        double parityWeight, double edgeHeightWeight, double blockadeWeight) {
+    public Genome (int id, double blockadeWeight, double edgeHeightWeight, double heightDifferenceWeight, double holesWeight,
+                   double islandWeight, double parityWeight) {
         this.id = id;
         this.heightDifferenceWeight = heightDifferenceWeight;
         this.holesWeight = holesWeight;
