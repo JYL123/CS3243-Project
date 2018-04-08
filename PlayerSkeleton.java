@@ -111,11 +111,13 @@ public class PlayerSkeleton {
 		public final int[][] field;
 		public final boolean lost;
 		public final int cleared;
+		public final int[] tops;
 
-		public SerializedState(int[][] field, boolean lost, int cleared) {
+		public SerializedState(int[][] field, boolean lost, int cleared, int[] tops) {
 			this.field = field;
 			this.lost = lost;
 			this.cleared = cleared;
+			this.tops = tops;
 		}
 	}
 
@@ -156,7 +158,7 @@ public class PlayerSkeleton {
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
 			lost = true;
-			return new SerializedState(field, lost, cleared);
+			return new SerializedState(field, lost, cleared, top);
 		}
 
 
@@ -204,7 +206,7 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, lost, cleared);
+		return new SerializedState(field, lost, cleared, top);
 	}
 
 
