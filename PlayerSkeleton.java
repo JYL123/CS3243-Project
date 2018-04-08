@@ -44,6 +44,24 @@ public class PlayerSkeleton {
 		return valuation;
 	}
 
+	private static int getHolesCount(int[][] field, int[] tops) {
+
+		int holeCount = 0;
+		boolean isHole = false;
+		for (int i = 0; i < State.COLS; i++) {
+			for (int j = tops[i]; j >= 0; j--) {
+			    if (field[j][i] != 0) {
+			        isHole = true;
+                } else if(isHole && field[j][i] == 0) {
+			        holeCount++;
+			        isHole = false;
+                }
+            }
+            isHole = false;
+		}
+
+		return holeCount;
+	}
 	private static int getHighestCol(int[][] field) {
 		return getTops(field).max().getAsInt();
 	}
