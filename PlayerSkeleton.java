@@ -84,6 +84,25 @@ public class PlayerSkeleton {
         }
         return totalBlockade;
     }
+
+    private static int getParityCount (int[][] field) {
+
+	    int filledCount = 0;
+        for (int i = 0; i < State.COLS; i++) {
+            for (int j = State.ROWS - 1; j >= 0; j--) {
+                if (field [j][i] != 0) {
+                    filledCount++;
+                }
+            }
+        }
+
+        int parity = (State.COLS * State.ROWS) - filledCount;
+        if (parity < 0) {
+            return parity * -1;
+        } else {
+            return parity;
+        }
+    }
 	private static int getHighestCol(int[][] field) {
 		return getTops(field).max().getAsInt();
 	}
