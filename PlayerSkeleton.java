@@ -40,6 +40,10 @@ public class PlayerSkeleton {
 		valuation += s.cleared * weights[0];
 		valuation += getHighestCol(s.field) * weights[1];
 		valuation += getLowestCol(s.field) * weights[2];
+		valuation +=  getHolesCount(s.field, s.tops) * weights[3];
+		valuation += getBlockadeCount(s.field, s.tops) * weights[4];
+		valuation += getParityCount(s.field) * weights[5] ;
+		valuation += getTotalHeightDiff(s.tops) * weights[6];
 
 		return valuation;
 	}
