@@ -62,6 +62,28 @@ public class PlayerSkeleton {
 
 		return holeCount;
 	}
+
+	private static int getBlockadeCount (int[][] field, int[] tops) {
+
+	    int totalBlockade = 0;
+	    int tempBlockade = 0;
+	    boolean isHole = false;
+	    for (int i = 0; i < State.COLS; i++) {
+	        for (int j = tops[i]; j >= 0; j--) {
+	            if (field[j][i] != 0) {
+	                isHole = true;
+	                tempBlockade++;
+                } else if (isHole) {
+	                totalBlockade += tempBlockade;
+	                tempBlockade = 0;
+	                isHole = false;
+                }
+            }
+            //reset tempBlockade when changing cols
+            tempBlockade = 0;
+        }
+        return totalBlockade;
+    }
 	private static int getHighestCol(int[][] field) {
 		return getTops(field).max().getAsInt();
 	}
