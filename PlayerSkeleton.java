@@ -9,7 +9,7 @@ public class PlayerSkeleton {
 	public int pickMove(State s, int[][] legalMoves) {
 
 		// This should eventually be learned by our genetic algorithm
-		double[] weights = {100, -1, 1};
+		double[] weights = {1, -2, 2, -99, -2, 0, -0.7};
 
 		// Pick the move with highest valuation
 		// We should implement minimax for better moves
