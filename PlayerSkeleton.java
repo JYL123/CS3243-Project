@@ -103,6 +103,22 @@ public class PlayerSkeleton {
             return parity;
         }
     }
+
+    private static int getTotalHeightDiff (int[] tops) {
+
+	    int totalDiff = 0;
+	    for (int i = 1; i < tops.length; i++) {
+	        int diff = tops[i] - tops[i-1];
+
+	        if (diff < 0) {
+	            diff = diff * -1;
+            }
+            totalDiff += diff;
+        }
+
+        return totalDiff;
+    }
+
 	private static int getHighestCol(int[][] field) {
 		return getTops(field).max().getAsInt();
 	}
