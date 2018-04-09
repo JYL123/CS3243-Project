@@ -5,9 +5,9 @@ public class Genome {
     /*weights for each feature, it is initialized randomly*/
     private double holesWeight = -1 * Math.random();
     private double islandWeight = 1 * Math.random();
-    private double parityWeight = 1 * Math.random();
+    private double parityWeight =  1 * Math.random();
     private double edgeHeightWeight = -1 * Math.random();
-    private double blockadeWeight = 100 * Math.random();
+    private double blockadeWeight = -1 * Math.random();
     private double heightDifferenceWeight = 1 * Math.random();
 
     public Genome(int id) {
