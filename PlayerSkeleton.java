@@ -76,19 +76,22 @@ public class PlayerSkeleton {
 		double valuation = 0;
 
 		// This should eventually be the full list of evaluation metrics
-		valuation += s.cleared * weights[0];
-		valuation += getHighestCol(s.field) * weights[1];
-		valuation += getLowestCol(s.field) * weights[2];
-		valuation += getHolesCount(s.field, s.top) * weights[3];
-		valuation += getBlockadeCount(s.field, s.top) * weights[4];
+		valuation += s.cleared;
+		valuation += (getHighestCol(s.field) - getLowestCol(s.field)) * weights[2];
+		valuation += getHolesCount(s.field, s.tops) * weights[3];
+		valuation += getBlockadeCount(s.field, s.tops) * weights[0];
 		valuation += getParityCount(s.field) * weights[5] ;
-		valuation += getTotalHeightDiff(s.top) * weights[6];
+		valuation += getTotalHeightDiff(s.tops) * weights[1];
+		valuation += getIslandCount(s.field) * weights[4];
 
 		return valuation;
 	}
+  
+  private static int getIslandCount(int[][] field) {
+		return 0;
+	}
 
 	private static int getHolesCount(int[][] field, int[] top) {
-
 		int holeCount = 0;
 		boolean isHole = false;
 		for (int i = 0; i < State.COLS; i++) {

@@ -48,11 +48,12 @@ public class GeneticAlgorithm {
             s.makeMove(p.pickMove(s,s.legalMoves(), weights));
             s.draw();
             s.drawNext(0,0);
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            //comment the thread to speed up the program
+//            try {
+//                Thread.sleep(300);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
         }
         score = s.getRowsCleared();
 
@@ -100,16 +101,16 @@ public class GeneticAlgorithm {
         double parityWeight = random.nextBoolean() ? momGenome.getParityWeight() : dadGenome.getParityWeight();
         double edgeHeightWeight = random.nextBoolean() ? momGenome.getEdgeHeightWeight() : dadGenome.getEdgeHeightWeight();
         double blockadeWeight = random.nextBoolean() ? momGenome.getBlockadeWeight() : dadGenome.getBlockadeWeight();
-        Genome child = new Genome(id, heightDifferenceWeight, holesWeight, islandWeight, parityWeight, edgeHeightWeight, blockadeWeight);
+        Genome child = new Genome(id, blockadeWeight, edgeHeightWeight, heightDifferenceWeight, holesWeight, islandWeight, parityWeight);
 
         /* mutation */
         int randomIndex = (int) Math.floor(Math.random() * (numberOfFeatures - 1));
-        if (randomIndex == 0) child.setHeightDifferenceWeight( 1 * Math.random());
-        else if (randomIndex == 1) child.setHolesWeight(-1 * Math.random());
-        else if (randomIndex == 2) child.setIslandWeight( 1 * Math.random());
-        else if (randomIndex == 3) child.setParityWeight( 1 * Math.random());
-        else if (randomIndex == 4) child.setEdgeHeightWeight( -1 * Math.random());
-        else child.setBlockadeWeight(100 * Math.random());
+        if (randomIndex == 0) child.setBlockadeWeight(-100 * Math.random());
+        else if (randomIndex == 1) child.setEdgeHeightWeight( -100 * Math.random());
+        else if (randomIndex == 2) child.setHeightDifferenceWeight( 100 * Math.random());
+        else if (randomIndex == 3) child.setHolesWeight( -100 * Math.random());
+        else if (randomIndex == 4) child.setIslandWeight( 100 * Math.random());
+        else child.setParityWeight( 100 * Math.random());
 
         /* new born will replace one of the parents, so population is evolved */
         population.set(selectReplacement(evaluationScore), child);
@@ -136,6 +137,7 @@ public class GeneticAlgorithm {
 
         //second parent
         double bestScore = evaluationScore.get(bestId);
+        currBestScore = 0;
         int saveId = bestId;
         evaluationScore.put(saveId, Double.NEGATIVE_INFINITY);
         for (Integer id : evaluationScore.keySet()) {
