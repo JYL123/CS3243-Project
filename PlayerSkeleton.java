@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -5,29 +8,64 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
+	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -10};
+
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
-		// This should eventually be learned by our genetic algorithm
-		//double[] weights = {100, -1, 1};
-		//double[] weights = {1, -2, 2, -99, -2, 0, -0.7};
+		// Serialize our state
+		SerializedState state = new SerializedState(s);
 
 		// Pick the move with highest valuation
-		// We should implement minimax for better moves
+		return expectimax(state, legalMoves, weights, 1);
+	}
+
+	private static int expectimax(SerializedState s, int[][] legalMoves, double[] weights, int depth) {
+
 		List<Double> valuations = Stream.of(legalMoves)
 				.parallel()
 				.map(move -> transition(s, move))
-				.map(state -> evaluate(state, weights))
+				.map(state -> expectimax(state, weights, depth, false))
 				.collect(Collectors.toList());
 
-		int move = 0;
-		for (int i = move + 1; i < valuations.size(); i++) {
-			if (valuations.get(i) > valuations.get(move)) {
-				move = i;
+		int maxMove = 0;
+		double maxValuation = Double.NEGATIVE_INFINITY;
+		for (int i = 0; i < valuations.size(); i++) {
+			if (valuations.get(i) > maxValuation) {
+				maxMove = i;
+				maxValuation = valuations.get(i);
 			}
 		}
 
-		return move;
+		return maxMove;
+	}
+
+	private static double expectimax(SerializedState s, double[] weights, int depth, boolean isMax) {
+		// Terminal node
+		if (depth == 0) {
+			return evaluate(s, weights);
+		}
+
+		// Max-node
+		if (isMax) {
+			int[][] legalMoves = State.legalMoves[s.nextPiece];
+			return Stream.of(legalMoves)
+					.parallel()
+					.map(move -> transition(s, move))
+					.map(state -> expectimax(state, weights, depth - 1, false))
+					.max(Double::compare)
+					.get();
+		}
+
+		// Exp-node
+		else {
+			return IntStream.range(0, State.N_PIECES)
+					.parallel()
+					.boxed()
+					.map(piece -> new SerializedState(s.field, s.top, s.turn, piece, s.lost, s.cleared))
+					.map(state -> expectimax(state, weights, depth, true))
+					.reduce(0.0, Double::sum) / State.N_PIECES;
+		}
 	}
 
 	private static double evaluate(SerializedState s, double[] weights) {
@@ -48,85 +86,84 @@ public class PlayerSkeleton {
 
 		return valuation;
 	}
-
-	private static int getIslandCount(int[][] field) {
+  
+  private static int getIslandCount(int[][] field) {
 		return 0;
 	}
 
-	private static int getHolesCount(int[][] field, int[] tops) {
-
+	private static int getHolesCount(int[][] field, int[] top) {
 		int holeCount = 0;
 		boolean isHole = false;
 		for (int i = 0; i < State.COLS; i++) {
-			for (int j = tops[i]; j >= 0; j--) {
-			    if (field[j][i] != 0) {
-			        isHole = true;
-                } else if(isHole && field[j][i] == 0) {
-			        holeCount++;
-			        isHole = false;
-                }
-            }
-            isHole = false;
+			for (int j = top[i]; j >= 0; j--) {
+				if (field[j][i] != 0) {
+					isHole = true;
+				} else if(isHole && field[j][i] == 0) {
+					holeCount++;
+					isHole = false;
+				}
+			}
+			isHole = false;
 		}
 
 		return holeCount;
 	}
 
-	private static int getBlockadeCount (int[][] field, int[] tops) {
+	private static int getBlockadeCount (int[][] field, int[] top) {
 
-	    int totalBlockade = 0;
-	    int tempBlockade = 0;
-	    boolean isHole = false;
-	    for (int i = 0; i < State.COLS; i++) {
-	        for (int j = tops[i]; j >= 0; j--) {
-	            if (field[j][i] != 0) {
-	                isHole = true;
-	                tempBlockade++;
-                } else if (isHole) {
-	                totalBlockade += tempBlockade;
-	                tempBlockade = 0;
-	                isHole = false;
-                }
-            }
-            //reset tempBlockade when changing cols
-            tempBlockade = 0;
-        }
-        return totalBlockade;
-    }
+		int totalBlockade = 0;
+		int tempBlockade = 0;
+		boolean isHole = false;
+		for (int i = 0; i < State.COLS; i++) {
+			for (int j = top[i]; j >= 0; j--) {
+				if (field[j][i] != 0) {
+					isHole = true;
+					tempBlockade++;
+				} else if (isHole) {
+					totalBlockade += tempBlockade;
+					tempBlockade = 0;
+					isHole = false;
+				}
+			}
+			//reset tempBlockade when changing cols
+			tempBlockade = 0;
+		}
+		return totalBlockade;
+	}
 
-    private static int getParityCount (int[][] field) {
+	private static int getParityCount (int[][] field) {
 
-	    int filledCount = 0;
-        for (int i = 0; i < State.COLS; i++) {
-            for (int j = State.ROWS - 1; j >= 0; j--) {
-                if (field [j][i] != 0) {
-                    filledCount++;
-                }
-            }
-        }
+		int filledCount = 0;
+		for (int i = 0; i < State.COLS; i++) {
+			for (int j = State.ROWS - 1; j >= 0; j--) {
+				if (field [j][i] != 0) {
+					filledCount++;
+				}
+			}
+		}
 
-        int parity = (State.COLS * State.ROWS) - filledCount;
-        if (parity < 0) {
-            return parity * -1;
-        } else {
-            return parity;
-        }
-    }
+		int parity = (State.COLS * State.ROWS) - filledCount;
+		if (parity < 0) {
+			return parity * -1;
+		} else {
+			return parity;
+		}
+	}
 
-    private static int getTotalHeightDiff (int[] tops) {
+	private static int getTotalHeightDiff (int[] top) {
 
-	    int totalDiff = 0;
-	    for (int i = 1; i < tops.length; i++) {
-	        int diff = tops[i] - tops[i-1];
+		int totalDiff = 0;
+		for (int i = 1; i < top.length; i++) {
+			int diff = top[i] - top[i-1];
 
-	        if (diff < 0) {
-	            diff = diff * -1;
-            }
-            totalDiff += diff;
-        }
+			if (diff < 0) {
+				diff = diff * -1;
+			}
+			totalDiff += diff;
+		}
 
-        return totalDiff;
-    }
+		return totalDiff;
+	}
 
 	private static int getHighestCol(int[][] field) {
 		return getTops(field).max().getAsInt();
@@ -151,37 +188,23 @@ public class PlayerSkeleton {
 				});
 	}
 
-	private class SerializedState {
-		public final int[][] field;
-		public final boolean lost;
-		public final int cleared;
-		public final int[] tops;
-
-		public SerializedState(int[][] field, boolean lost, int cleared, int[] tops) {
-			this.field = field;
-			this.lost = lost;
-			this.cleared = cleared;
-			this.tops = tops;
-		}
-	}
-
-	private SerializedState transition(State s, int[] move) {
-		int nextPiece = s.getNextPiece();
+	private static SerializedState transition(SerializedState s, int[] move) {
+		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
 
 		int ROWS = State.ROWS;
 		int COLS = State.COLS;
 		boolean lost = s.lost;
-		int turn = s.getTurnNumber();
-		int cleared = s.getRowsCleared();
+		int turn = s.turn;
+		int cleared = s.cleared;
 
 		// Deep copy
 		int[][] field = new int[ROWS][];
 		for (int i = 0; i < ROWS; i++) {
-			field[i] = s.getField()[i].clone();
+			field[i] = s.field[i].clone();
 		}
-		int[] top = s.getTop().clone();
+		int[] top = s.top.clone();
 
 		int[][][] pTop = State.getpTop();
 		int[][][] pBottom = State.getpBottom();
@@ -202,7 +225,7 @@ public class PlayerSkeleton {
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
 			lost = true;
-			return new SerializedState(field, lost, cleared, top);
+			return new SerializedState(field, top, nextPiece, turn, lost, cleared);
 		}
 
 
@@ -250,27 +273,46 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, lost, cleared, top);
+		return new SerializedState(field, top, turn, nextPiece, lost, cleared);
 	}
-
 
 	public static void main(String[] args) {
 		State s = new State();
 		new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();
-		double[] weights = {100, -1, 1};
 		while(!s.hasLost()) {
-			s.makeMove(p.pickMove(s,s.legalMoves(), weights));
+			s.makeMove(p.pickMove(s,s.legalMoves(),DEFAULT_WEIGHTS));
 			s.draw();
 			s.drawNext(0,0);
-			try {
-				Thread.sleep(300);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				Thread.sleep(300);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
 		}
 		System.out.println("You have completed "+s.getRowsCleared()+" rows.");
 	}
 
 }
 
+class SerializedState {
+	final int[][] field;
+	final int[] top;
+	final int turn;
+	final int nextPiece;
+	final boolean lost;
+	final int cleared;
+
+	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
+		this.field = field;
+		this.top = top;
+		this.turn = turn;
+		this.nextPiece = nextPiece;
+		this.lost = lost;
+		this.cleared = cleared;
+	}
+
+	SerializedState(State s) {
+		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), s.lost, s.getRowsCleared());
+	}
+}
