@@ -5,19 +5,27 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
+	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -0.7};
+
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
-		// This should eventually be learned by our genetic algorithm
-		//double[] weights = {100, -1, 1};
-		//double[] weights = {1, -2, 2, -99, -2, 0, -0.7};
+		// Serialize our state
+		SerializedState state = new SerializedState(
+				s.getField(),
+				s.getTop(),
+				s.getTurnNumber(),
+				s.getNextPiece(),
+				s.lost,
+				s.getRowsCleared()
+		);
 
 		// Pick the move with highest valuation
 		// We should implement minimax for better moves
 		List<Double> valuations = Stream.of(legalMoves)
 				.parallel()
-				.map(move -> transition(s, move))
-				.map(state -> evaluate(state, weights))
+				.map(move -> transition(state, move))
+				.map(nextState -> evaluate(nextState, weights))
 				.collect(Collectors.toList());
 
 		int move = 0;
@@ -41,20 +49,20 @@ public class PlayerSkeleton {
 		valuation += s.cleared * weights[0];
 		valuation += getHighestCol(s.field) * weights[1];
 		valuation += getLowestCol(s.field) * weights[2];
-		valuation +=  getHolesCount(s.field, s.tops) * weights[3];
-		valuation += getBlockadeCount(s.field, s.tops) * weights[4];
+		valuation +=  getHolesCount(s.field, s.top) * weights[3];
+		valuation += getBlockadeCount(s.field, s.top) * weights[4];
 		valuation += getParityCount(s.field) * weights[5] ;
-		valuation += getTotalHeightDiff(s.tops) * weights[6];
+		valuation += getTotalHeightDiff(s.top) * weights[6];
 
 		return valuation;
 	}
 
-	private static int getHolesCount(int[][] field, int[] tops) {
+	private static int getHolesCount(int[][] field, int[] top) {
 
 		int holeCount = 0;
 		boolean isHole = false;
 		for (int i = 0; i < State.COLS; i++) {
-			for (int j = tops[i]; j >= 0; j--) {
+			for (int j = top[i]; j >= 0; j--) {
 			    if (field[j][i] != 0) {
 			        isHole = true;
                 } else if(isHole && field[j][i] == 0) {
@@ -68,13 +76,13 @@ public class PlayerSkeleton {
 		return holeCount;
 	}
 
-	private static int getBlockadeCount (int[][] field, int[] tops) {
+	private static int getBlockadeCount (int[][] field, int[] top) {
 
 	    int totalBlockade = 0;
 	    int tempBlockade = 0;
 	    boolean isHole = false;
 	    for (int i = 0; i < State.COLS; i++) {
-	        for (int j = tops[i]; j >= 0; j--) {
+	        for (int j = top[i]; j >= 0; j--) {
 	            if (field[j][i] != 0) {
 	                isHole = true;
 	                tempBlockade++;
@@ -109,11 +117,11 @@ public class PlayerSkeleton {
         }
     }
 
-    private static int getTotalHeightDiff (int[] tops) {
+    private static int getTotalHeightDiff (int[] top) {
 
 	    int totalDiff = 0;
-	    for (int i = 1; i < tops.length; i++) {
-	        int diff = tops[i] - tops[i-1];
+	    for (int i = 1; i < top.length; i++) {
+	        int diff = top[i] - top[i-1];
 
 	        if (diff < 0) {
 	            diff = diff * -1;
@@ -148,36 +156,40 @@ public class PlayerSkeleton {
 	}
 
 	private class SerializedState {
-		public final int[][] field;
-		public final boolean lost;
-		public final int cleared;
-		public final int[] tops;
+		final int[][] field;
+		final int[] top;
+		final int turn;
+		final int nextPiece;
+		final boolean lost;
+		final int cleared;
 
-		public SerializedState(int[][] field, boolean lost, int cleared, int[] tops) {
+		SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
 			this.field = field;
+			this.top = top;
+			this.turn = turn;
+			this.nextPiece = nextPiece;
 			this.lost = lost;
 			this.cleared = cleared;
-			this.tops = tops;
 		}
 	}
 
-	private SerializedState transition(State s, int[] move) {
-		int nextPiece = s.getNextPiece();
+	private SerializedState transition(SerializedState s, int[] move) {
+		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
 
 		int ROWS = State.ROWS;
 		int COLS = State.COLS;
 		boolean lost = s.lost;
-		int turn = s.getTurnNumber();
-		int cleared = s.getRowsCleared();
+		int turn = s.turn;
+		int cleared = s.cleared;
 
 		// Deep copy
 		int[][] field = new int[ROWS][];
 		for (int i = 0; i < ROWS; i++) {
-			field[i] = s.getField()[i].clone();
+			field[i] = s.field[i].clone();
 		}
-		int[] top = s.getTop().clone();
+		int[] top = s.top.clone();
 
 		int[][][] pTop = State.getpTop();
 		int[][][] pBottom = State.getpBottom();
@@ -198,7 +210,7 @@ public class PlayerSkeleton {
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
 			lost = true;
-			return new SerializedState(field, lost, cleared, top);
+			return new SerializedState(field, top, nextPiece, turn, lost, cleared);
 		}
 
 
@@ -246,17 +258,15 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, lost, cleared, top);
+		return new SerializedState(field, top, turn, nextPiece, lost, cleared);
 	}
-
 
 	public static void main(String[] args) {
 		State s = new State();
 		new TFrame(s);
 		PlayerSkeleton p = new PlayerSkeleton();
-		double[] weights = {100, -1, 1};
 		while(!s.hasLost()) {
-			s.makeMove(p.pickMove(s,s.legalMoves(), weights));
+			s.makeMove(p.pickMove(s,s.legalMoves(),DEFAULT_WEIGHTS));
 			s.draw();
 			s.drawNext(0,0);
 			try {
