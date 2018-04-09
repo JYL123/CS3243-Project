@@ -9,7 +9,7 @@ public class PlayerSkeleton {
 	public int pickMove(State s, int[][] legalMoves) {
 
 		// This should eventually be learned by our genetic algorithm
-		double[] weights = {100, -1, 1};
+		double[] weights = {1, -2, 2, -99, -2, 0, -0.7};
 
 		// Pick the move with highest valuation
 		// We should implement minimax for better moves
@@ -40,9 +40,88 @@ public class PlayerSkeleton {
 		valuation += s.cleared * weights[0];
 		valuation += getHighestCol(s.field) * weights[1];
 		valuation += getLowestCol(s.field) * weights[2];
+		valuation +=  getHolesCount(s.field, s.tops) * weights[3];
+		valuation += getBlockadeCount(s.field, s.tops) * weights[4];
+		valuation += getParityCount(s.field) * weights[5] ;
+		valuation += getTotalHeightDiff(s.tops) * weights[6];
 
 		return valuation;
 	}
+
+	private static int getHolesCount(int[][] field, int[] tops) {
+
+		int holeCount = 0;
+		boolean isHole = false;
+		for (int i = 0; i < State.COLS; i++) {
+			for (int j = tops[i]; j >= 0; j--) {
+			    if (field[j][i] != 0) {
+			        isHole = true;
+                } else if(isHole && field[j][i] == 0) {
+			        holeCount++;
+			        isHole = false;
+                }
+            }
+            isHole = false;
+		}
+
+		return holeCount;
+	}
+
+	private static int getBlockadeCount (int[][] field, int[] tops) {
+
+	    int totalBlockade = 0;
+	    int tempBlockade = 0;
+	    boolean isHole = false;
+	    for (int i = 0; i < State.COLS; i++) {
+	        for (int j = tops[i]; j >= 0; j--) {
+	            if (field[j][i] != 0) {
+	                isHole = true;
+	                tempBlockade++;
+                } else if (isHole) {
+	                totalBlockade += tempBlockade;
+	                tempBlockade = 0;
+	                isHole = false;
+                }
+            }
+            //reset tempBlockade when changing cols
+            tempBlockade = 0;
+        }
+        return totalBlockade;
+    }
+
+    private static int getParityCount (int[][] field) {
+
+	    int filledCount = 0;
+        for (int i = 0; i < State.COLS; i++) {
+            for (int j = State.ROWS - 1; j >= 0; j--) {
+                if (field [j][i] != 0) {
+                    filledCount++;
+                }
+            }
+        }
+
+        int parity = (State.COLS * State.ROWS) - filledCount;
+        if (parity < 0) {
+            return parity * -1;
+        } else {
+            return parity;
+        }
+    }
+
+    private static int getTotalHeightDiff (int[] tops) {
+
+	    int totalDiff = 0;
+	    for (int i = 1; i < tops.length; i++) {
+	        int diff = tops[i] - tops[i-1];
+
+	        if (diff < 0) {
+	            diff = diff * -1;
+            }
+            totalDiff += diff;
+        }
+
+        return totalDiff;
+    }
 
 	private static int getHighestCol(int[][] field) {
 		return getTops(field).max().getAsInt();
@@ -71,11 +150,13 @@ public class PlayerSkeleton {
 		public final int[][] field;
 		public final boolean lost;
 		public final int cleared;
+		public final int[] tops;
 
-		public SerializedState(int[][] field, boolean lost, int cleared) {
+		public SerializedState(int[][] field, boolean lost, int cleared, int[] tops) {
 			this.field = field;
 			this.lost = lost;
 			this.cleared = cleared;
+			this.tops = tops;
 		}
 	}
 
@@ -116,7 +197,7 @@ public class PlayerSkeleton {
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
 			lost = true;
-			return new SerializedState(field, lost, cleared);
+			return new SerializedState(field, lost, cleared, top);
 		}
 
 
@@ -164,7 +245,7 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, lost, cleared);
+		return new SerializedState(field, lost, cleared, top);
 	}
 
 
