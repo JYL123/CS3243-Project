@@ -78,10 +78,10 @@ public class PlayerSkeleton {
 		// This should eventually be the full list of evaluation metrics
 		valuation += s.cleared;
 		valuation += (getHighestCol(s.field) - getLowestCol(s.field)) * weights[2];
-		valuation += getHolesCount(s.field, s.tops) * weights[3];
-		valuation += getBlockadeCount(s.field, s.tops) * weights[0];
+		valuation += getHolesCount(s.field, s.top) * weights[3];
+		valuation += getBlockadeCount(s.field, s.top) * weights[0];
 		valuation += getParityCount(s.field) * weights[5] ;
-		valuation += getTotalHeightDiff(s.tops) * weights[1];
+		valuation += getTotalHeightDiff(s.top) * weights[1];
 		valuation += getIslandCount(s.field) * weights[4];
 
 		return valuation;

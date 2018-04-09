@@ -80,7 +80,7 @@ public class GeneticAlgorithm {
 
     /*
      * update population, each time choose the first and second sets of weight 
-     * their child will replace one of the parents
+     * their child will replace the worst in the list
      * return an updated population
      */
     public static ArrayList<Genome> evolve (ArrayList<Genome> population, HashMap<Integer, Double> evaluationScore) {
@@ -112,7 +112,7 @@ public class GeneticAlgorithm {
         else if (randomIndex == 4) child.setIslandWeight( 100 * Math.random());
         else child.setParityWeight( 100 * Math.random());
 
-        /* new born will replace one of the parents, so population is evolved */
+        /* new born will replace the worst scored weights in the list, so population is evolved */
         population.set(selectReplacement(evaluationScore), child);
 
         return population;
