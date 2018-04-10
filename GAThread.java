@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class GAThread{
-   private int largeNumber = 100;
+   private int largeNumber = 50;
    private int numFeatures = 6;
    double[] weights = new double[numFeatures];
    GeneticAlgorithm GA = new GeneticAlgorithm();
@@ -21,7 +21,9 @@ public class GAThread{
     //get the evaluation score for each individual in the populaion
     HashMap<Integer, Double> evaluationScore = GA.evaluatePopulation(population, state);
     //scores before evolve
+    System.out.println("First generation score:");
     for (Integer id : evaluationScore.keySet()) {
+        System.out.println("First generation score:");
         System.out.println(id + ": "+ evaluationScore.get(id));
         System.out.println("");
     }
@@ -30,6 +32,7 @@ public class GAThread{
         population = GA.evolve(population, evaluationScore);
         evaluationScore = GA.evaluatePopulation(population, state);
         //print score after each evolution
+        System.out.println("Score after evolving:");
         for (Integer id : evaluationScore.keySet()) {
             System.out.println(id + ": "+ evaluationScore.get(id));
         }

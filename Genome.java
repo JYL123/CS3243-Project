@@ -3,7 +3,7 @@ public class Genome {
 
     private int id;
     /*weights for each feature, it is initialized randomly*/
-    private double holesWeight = -1 * Math.random();
+    private double holesWeight = -3 * Math.random();
     private double islandWeight = 1 * Math.random();
     private double parityWeight =  1 * Math.random();
     private double edgeHeightWeight = -1 * Math.random();
