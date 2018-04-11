@@ -8,7 +8,14 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
-	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -10};
+	public final static double[] DEFAULT_WEIGHTS = {
+			-12.017158881253732,
+			-57.15851874259157,
+			41.70493697627634,
+			-37.20733213557791,
+			56.73326127463958,
+			35.316656436742065
+	};
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
@@ -68,7 +75,7 @@ public class PlayerSkeleton {
 		}
 	}
 
-	private static double evaluate(SerializedState s, double[] weights) {
+	public static double evaluate(SerializedState s, double[] weights) {
 		if (s.lost) {
 			return Double.NEGATIVE_INFINITY;
 		}
@@ -188,7 +195,11 @@ public class PlayerSkeleton {
 				});
 	}
 
-	private static SerializedState transition(SerializedState s, int[] move) {
+	public static SerializedState transition(SerializedState s, int[] move) {
+		return transition(s, move, SerializedState.randomPiece());
+	}
+
+	public static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
 		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
@@ -224,8 +235,7 @@ public class PlayerSkeleton {
 
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
-			lost = true;
-			return new SerializedState(field, top, nextPiece, turn, lost, cleared);
+			return new SerializedState(field, top, followingPiece, turn + 1, true, cleared);
 		}
 
 
@@ -273,7 +283,7 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, top, turn, nextPiece, lost, cleared);
+		return new SerializedState(field, top, turn + 1, followingPiece, lost, cleared);
 	}
 
 	public static void main(String[] args) {
@@ -303,6 +313,15 @@ class SerializedState {
 	final boolean lost;
 	final int cleared;
 
+	SerializedState() {
+		this(new int[State.ROWS][State.COLS],
+				new int[State.COLS],
+				0,
+				randomPiece(),
+				false,
+				0);
+	}
+
 	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
 		this.field = field;
 		this.top = top;
@@ -313,6 +332,17 @@ class SerializedState {
 	}
 
 	SerializedState(State s) {
-		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), s.lost, s.getRowsCleared());
+		this(s.getField(),
+				s.getTop(),
+				s.getTurnNumber(),
+				s.getNextPiece(),
+				s.lost,
+				s.getRowsCleared());
 	}
+
+	public static int randomPiece() {
+		return (int) (Math.random() * State.N_PIECES);
+	}
+
+
 }
