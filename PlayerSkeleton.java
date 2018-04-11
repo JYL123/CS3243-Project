@@ -94,6 +94,7 @@ public class PlayerSkeleton {
 	private static int getHolesCount(int[][] field, int[] top) {
 		int holeCount = 0;
 		boolean isHole = false;
+
 		for (int i = 0; i < State.COLS; i++) {
 			for (int j = top[i]; j >= 0; j--) {
 				if (field[j][i] != 0) {
@@ -141,7 +142,6 @@ public class PlayerSkeleton {
 				}
 			}
 		}
-
 		int parity = (State.COLS * State.ROWS) - filledCount;
 		if (parity < 0) {
 			return parity * -1;
