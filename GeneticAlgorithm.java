@@ -4,11 +4,10 @@ import java.util.Random;
 import java.util.Map.Entry;
 import java.util.LinkedHashMap;
 import static java.util.Collections.reverseOrder;
-import java.util.stream.Collectors;
 
 public class GeneticAlgorithm {
     private static ArrayList<Genome> population;
-    private static int populationSize = 10;
+    private static int populationSize = 6;
     private static int numberOfFeatures = 6; //highestCol and lowestCol are replaced by heightDifference
     /*features of a state, we randomly define a state in the begining*/
     private static int blockadeWeightIndex = 0;
@@ -17,6 +16,8 @@ public class GeneticAlgorithm {
     private static int holesWeightIndex = 3;
     private static int islandWeightIndex = 4;
     private static int parityWeightIndex = 5;
+    private static double threadhold = 0.1;
+    private static double parentsSelectionRatio = 0.5;
 
 
     public ArrayList<Genome> initializePopulation () {
@@ -82,8 +83,8 @@ public class GeneticAlgorithm {
     }
 
     /*
-     * update population, each time choose the first and second sets of weight 
-     * their child will replace the worst in the list
+     * update population, each time choose a certain proportion of the population and produce children
+     * children will make up another 50% of the population
      * return an updated population
      */
     public static ArrayList<Genome> evolve (ArrayList<Genome> population, HashMap<Integer, Double> evaluationScore) {
@@ -91,12 +92,12 @@ public class GeneticAlgorithm {
     }
 
     /**
-     * top 10% of the population is chosen for evolution
+     * top parentsSelectionRatio (a percentage) of the population is chosen for evolution
      * return the ids of parents
      */
     public static int[] selectParent(HashMap<Integer, Double> evaluationScore) {
-        // 50% of population
-        int numParents = (int) Math.floor(populationSize * 0.5);
+        // certain percentage of population
+        int numParents = (int) Math.floor(populationSize * parentsSelectionRatio);
         int[] parents = new int[numParents];
         // sort based on score
         HashMap<Integer, Double> sortedScore = sortByValue(evaluationScore);
@@ -132,29 +133,65 @@ public class GeneticAlgorithm {
             Genome momGenome = population.get(randomIndexMom);
             Genome dadGenome = population.get(randomIndexDad);
 
-            /* cross over */
-            Random random = new Random();
-            double holesWeight = random.nextBoolean() ? momGenome.getHolesWeight() : dadGenome.getHolesWeight();
-            double heightDifferenceWeight = random.nextBoolean() ? momGenome.getHeightDifferenceWeight() : dadGenome.getHeightDifferenceWeight();
-            double islandWeight = random.nextBoolean() ? momGenome.getIslandWeight() : dadGenome.getIslandWeight();
-            double parityWeight = random.nextBoolean() ? momGenome.getParityWeight() : dadGenome.getParityWeight();
-            double edgeHeightWeight = random.nextBoolean() ? momGenome.getEdgeHeightWeight() : dadGenome.getEdgeHeightWeight();
-            double blockadeWeight = random.nextBoolean() ? momGenome.getBlockadeWeight() : dadGenome.getBlockadeWeight();
-            Genome child = new Genome(newPopulation.size()+1, blockadeWeight, edgeHeightWeight, heightDifferenceWeight, holesWeight, islandWeight, parityWeight);
+            /* crossover */
+            Genome child = crossover(momGenome, dadGenome, newPopulation);
 
             /* mutation */
-            int randomIndex = (int) Math.floor(Math.random() * (numberOfFeatures - 1));
-            if (randomIndex == 0) child.setBlockadeWeight(-10 * Math.random());
-            else if (randomIndex == 1) child.setEdgeHeightWeight( -10 * Math.random());
-            else if (randomIndex == 2) child.setHeightDifferenceWeight( -10 * Math.random());
-            else if (randomIndex == 3) child.setHolesWeight( -50 * Math.random());
-            else if (randomIndex == 4) child.setIslandWeight( -10 * Math.random());
-            else child.setParityWeight( -10 * Math.random());
+            Random mutation = new Random();
+            boolean isMutation = false;
+            double randomMutation = mutation.nextGaussian();
+            if(randomMutation > threadhold) {
+                isMutation = true;
+            }
+            if(isMutation) {
+                mutation(child);
+            }
 
             newPopulation.add(child);
         }
 
         return newPopulation;
+    }
+
+    /* Swap Mutation */
+    public static Genome mutation (Genome child) {
+        double[] childweights = new double[numberOfFeatures];
+        childweights[0] = child.getBlockadeWeight();
+        childweights[1] = child.getEdgeHeightWeight();
+        childweights[2] = child.getHeightDifferenceWeight();
+        childweights[3] = child.getHolesWeight();
+        childweights[4] = child.getIslandWeight();
+        childweights[5] = child.getParityWeight();
+
+        /* swap */
+        int randomIndex1 = (int) Math.floor(Math.random() * (numberOfFeatures));
+        int randomIndex2 = (int) Math.floor(Math.random() * (numberOfFeatures));
+        double temp = childweights[randomIndex1];
+        childweights[randomIndex1] = childweights[randomIndex2];
+        childweights[randomIndex2] = temp;
+
+        child.setBlockadeWeight(childweights[0]);
+        child.setEdgeHeightWeight(childweights[1]);
+        child.setHeightDifferenceWeight(childweights[2]);
+        child.setHolesWeight(childweights[3]);
+        child.setIslandWeight(childweights[4]);
+        child.setParityWeight(childweights[5]);
+
+        return child;
+    }
+
+    /* cross over */
+    public static Genome crossover (Genome momGenome, Genome dadGenome, ArrayList<Genome> newPopulation) {
+        Random random = new Random();
+        double holesWeight = random.nextBoolean() ? momGenome.getHolesWeight() : dadGenome.getHolesWeight();
+        double heightDifferenceWeight = random.nextBoolean() ? momGenome.getHeightDifferenceWeight() : dadGenome.getHeightDifferenceWeight();
+        double islandWeight = random.nextBoolean() ? momGenome.getIslandWeight() : dadGenome.getIslandWeight();
+        double parityWeight = random.nextBoolean() ? momGenome.getParityWeight() : dadGenome.getParityWeight();
+        double edgeHeightWeight = random.nextBoolean() ? momGenome.getEdgeHeightWeight() : dadGenome.getEdgeHeightWeight();
+        double blockadeWeight = random.nextBoolean() ? momGenome.getBlockadeWeight() : dadGenome.getBlockadeWeight();
+        Genome child = new Genome(newPopulation.size()+1, blockadeWeight, edgeHeightWeight, heightDifferenceWeight, holesWeight, islandWeight, parityWeight);
+
+        return child;
     }
 
     public static <K, V extends Comparable<? super V>> HashMap<K, V> sortByValue(HashMap<K, V> map) {

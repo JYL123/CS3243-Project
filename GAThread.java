@@ -23,7 +23,6 @@ public class GAThread{
     //scores before evolve
     System.out.println("First generation score:");
     for (Integer id : evaluationScore.keySet()) {
-        System.out.println("First generation score:");
         System.out.println(id + ": "+ evaluationScore.get(id));
         System.out.println("");
     }
