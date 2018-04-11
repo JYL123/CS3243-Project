@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,14 +9,7 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
-	public final static double[] DEFAULT_WEIGHTS = {
-			-12.017158881253732,
-			-57.15851874259157,
-			41.70493697627634,
-			-37.20733213557791,
-			56.73326127463958,
-			35.316656436742065
-	};
+	public final static double[] DEFAULT_WEIGHTS = {-5.909978, -13.523018, 5.764364, -96.452873, 36.040035, 34.941766 };
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
@@ -84,7 +78,7 @@ public class PlayerSkeleton {
 
 		// This should eventually be the full list of evaluation metrics
 		valuation += s.cleared;
-		valuation += (getHighestCol(s.field) - getLowestCol(s.field)) * weights[2];
+		valuation += (getHighestCol(s) - getLowestCol(s)) * weights[2];
 		valuation += getHolesCount(s.field, s.top) * weights[3];
 		valuation += getBlockadeCount(s.field, s.top) * weights[0];
 		valuation += getParityCount(s.field) * weights[5] ;
@@ -172,27 +166,12 @@ public class PlayerSkeleton {
 		return totalDiff;
 	}
 
-	private static int getHighestCol(int[][] field) {
-		return getTops(field).max().getAsInt();
+	private static int getHighestCol(SerializedState s) {
+		return Arrays.stream(s.top).max().getAsInt();
 	}
 
-	private static int getLowestCol(int[][] field) {
-		return getTops(field).min().getAsInt();
-	}
-
-	/*
-	 * Returns a stream of the height of the top piece in each column
-	 */
-	private static IntStream getTops(int[][] field) {
-		return IntStream.range(0, State.COLS)
-				.map(j -> {
-					for (int i = State.ROWS-1; i >= 0; i--) {
-						if (field[i][j] != 0) {
-							return i;
-						}
-					}
-					return 0;
-				});
+	private static int getLowestCol(SerializedState s) {
+		return Arrays.stream(s.top).min().getAsInt();
 	}
 
 	public static SerializedState transition(SerializedState s, int[] move) {
