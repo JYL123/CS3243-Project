@@ -9,12 +9,15 @@ import java.util.stream.Stream;
 public class PlayerSkeleton {
 
 	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -10};
+	private int[] pieceHistory = new int[State.N_PIECES];
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
+		pieceHistory[s.nextPiece]++;
+
 		// Serialize our state
-		SerializedState state = new SerializedState(s);
+		SerializedState state = new SerializedState(s, pieceHistory);
 
 		// Pick the move with highest valuation
 		return expectimax(state, legalMoves, weights, 1);
@@ -62,9 +65,11 @@ public class PlayerSkeleton {
 			return IntStream.range(0, State.N_PIECES)
 					.parallel()
 					.boxed()
-					.map(piece -> new SerializedState(s.field, s.top, s.turn, piece, s.lost, s.cleared))
-					.map(state -> expectimax(state, weights, depth, true))
-					.reduce(0.0, Double::sum) / State.N_PIECES;
+					.map(piece -> {
+						SerializedState state = new SerializedState(s.field, s.top, s.turn, piece, s.pieceHistory, s.lost, s.cleared);
+                        return s.pieceHistory[piece] * expectimax(state, weights, depth, true);
+					})
+					.reduce(0.0, Double::sum) / s.turn;
 		}
 	}
 
@@ -224,8 +229,7 @@ public class PlayerSkeleton {
 
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
-			lost = true;
-			return new SerializedState(field, top, nextPiece, turn, lost, cleared);
+			return new SerializedState(field, top, turn, nextPiece, s.pieceHistory, true, cleared);
 		}
 
 
@@ -273,7 +277,7 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, top, turn, nextPiece, lost, cleared);
+		return new SerializedState(field, top, turn, nextPiece, s.pieceHistory, lost, cleared);
 	}
 
 	public static void main(String[] args) {
@@ -302,17 +306,19 @@ class SerializedState {
 	final int nextPiece;
 	final boolean lost;
 	final int cleared;
+	final int[] pieceHistory;
 
-	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
+	SerializedState(int[][] field, int[] top, int turn, int nextPiece, int[] pieceHistory, boolean lost, int cleared) {
 		this.field = field;
 		this.top = top;
 		this.turn = turn;
 		this.nextPiece = nextPiece;
 		this.lost = lost;
 		this.cleared = cleared;
+		this.pieceHistory = pieceHistory;
 	}
 
-	SerializedState(State s) {
-		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), s.lost, s.getRowsCleared());
+	SerializedState(State s, int[] pieceHistory) {
+		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
 	}
 }
