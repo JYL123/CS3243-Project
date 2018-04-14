@@ -38,12 +38,9 @@ public class GeneticAlgorithm {
      */
     private static double evaluateIndividual (double[] individual, State s) {
         double score = 0;
-        //new TFrame(s);
         PlayerSkeleton p = new PlayerSkeleton();
         while(!s.hasLost()) {
             s.makeMove(p.pickMove(s,s.legalMoves(), individual));
-            //s.draw();
-            //s.drawNext(0,0);
             System.out.println(s.getRowsCleared() + " rows cleared.");
         }
         score = s.getRowsCleared();
