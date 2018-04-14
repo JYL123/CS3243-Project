@@ -50,7 +50,7 @@ public class State {
 			{3,2}
 	};
 	//height of the pieces [piece ID][orientation]
-	private static int[][] pHeight = {
+	public static int[][] pHeight = {
 			{2},
 			{4,1},
 			{3,2,3,2},
