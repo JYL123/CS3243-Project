@@ -54,8 +54,7 @@ public class GeneticAlgorithm {
     public static List<Double> evaluatePopulation (ArrayList<double[]> population) {
         List<Double> fitness = population
                 .parallelStream()
-                .map(i ->
-                    evaluateIndividual(i, new State())
+                .map(i -> evaluateIndividual(i, new State())
                 ).collect(Collectors.toList());
 
         return fitness;
