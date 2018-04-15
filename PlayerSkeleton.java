@@ -66,7 +66,7 @@ public class PlayerSkeleton {
 		}
 	}
 
-	private static double evaluate(SerializedState s, double[] weights) {
+	public static double evaluate(SerializedState s, double[] weights) {
 		if (s.lost) {
 			return Double.NEGATIVE_INFINITY;
 		}
@@ -225,7 +225,7 @@ public class PlayerSkeleton {
 		return transition(s, move, SerializedState.randomPiece());
 	}
 
-	private static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
+	public static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
 		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
