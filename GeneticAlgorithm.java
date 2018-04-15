@@ -41,7 +41,7 @@ public class GeneticAlgorithm {
         PlayerSkeleton p = new PlayerSkeleton();
         while(!s.hasLost()) {
             s.makeMove(p.pickMove(s,s.legalMoves(), individual));
-            System.out.println(s.getRowsCleared() + " rows cleared.");
+            if(s.getRowsCleared() % 1000 == 0)System.out.println(s.getRowsCleared() + " rows cleared.");
         }
         score = s.getRowsCleared();
 

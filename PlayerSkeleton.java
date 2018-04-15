@@ -14,7 +14,7 @@ public class PlayerSkeleton {
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
-		// Serialize our state
+		// Serialize our states
 		SerializedState state = new SerializedState(s);
 
 		// Pick the move with highest valuation
