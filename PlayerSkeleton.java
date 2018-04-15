@@ -10,12 +10,15 @@ import java.util.stream.Stream;
 public class PlayerSkeleton {
 
 	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -10};
+	private int[] pieceHistory = new int[State.N_PIECES];
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
+		pieceHistory[s.nextPiece]++;
+
 		// Serialize our state
-		SerializedState state = new SerializedState(s);
+		SerializedState state = new SerializedState(s, pieceHistory);
 
 		// Pick the move with highest valuation
 		return expectimax(state, legalMoves, weights, 1);
@@ -63,9 +66,11 @@ public class PlayerSkeleton {
 			return IntStream.range(0, State.N_PIECES)
 					.parallel()
 					.boxed()
-					.map(piece -> new SerializedState(s.field, s.top, s.turn, piece, s.lost, s.cleared))
-					.map(state -> expectimax(state, weights, depth, true))
-					.reduce(0.0, Double::sum) / State.N_PIECES;
+					.map(piece -> {
+						SerializedState state = new SerializedState(s.field, s.top, s.turn, piece, s.pieceHistory, s.lost, s.cleared);
+                        return s.pieceHistory[piece] * expectimax(state, weights, depth, true);
+					})
+					.reduce(0.0, Double::sum) / s.turn;
 		}
 	}
 
@@ -311,7 +316,6 @@ public class PlayerSkeleton {
 				}
 			}
 		}
-
 		return new SerializedState(field, top, turn + 1, followingPiece, lost, cleared);
 	}
 
@@ -341,6 +345,7 @@ class SerializedState {
 	final int nextPiece;
 	final boolean lost;
 	final int cleared;
+	final int[] pieceHistory;
 
 	SerializedState() {
 			this(new int[State.ROWS][State.COLS],
@@ -358,10 +363,11 @@ class SerializedState {
 		this.nextPiece = nextPiece;
 		this.lost = lost;
 		this.cleared = cleared;
+		this.pieceHistory = pieceHistory;
 	}
 
-	SerializedState(State s) {
-		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), s.lost, s.getRowsCleared());
+	SerializedState(State s, int[] pieceHistory) {
+		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
 	}
 
 	public static int randomPiece() {
