@@ -1,7 +1,4 @@
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -69,7 +66,7 @@ public class PlayerSkeleton {
 		}
 	}
 
-	private static double evaluate(SerializedState s, double[] weights) {
+	public static double evaluate(SerializedState s, double[] weights) {
 		if (s.lost) {
 			return Double.NEGATIVE_INFINITY;
 		}
@@ -228,7 +225,7 @@ public class PlayerSkeleton {
 		return transition(s, move, SerializedState.randomPiece());
 	}
 
-	private static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
+	public static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
 		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
@@ -370,3 +367,4 @@ class SerializedState {
 		return (int) (Math.random() * State.N_PIECES);
 	}
 }
+
