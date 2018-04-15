@@ -9,12 +9,12 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
-	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -10};
+	public final static double[] DEFAULT_WEIGHTS = {-0.49301994673966787, -0.8310718689117889, -0.3988538321216405, -0.7865373735881536, 1.206862797515011, -0.29890681382619344};
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
-		// Serialize our states
+		// Serialize our state
 		SerializedState state = new SerializedState(s);
 
 		// Pick the move with highest valuation
@@ -100,11 +100,12 @@ public class PlayerSkeleton {
 	}
 
 	private static int getHighestCol(SerializedState s) {
-		return Arrays.stream(s.top).max().getAsInt();
+		int max = Arrays.stream(s.top).max().isPresent() ? Arrays.stream(s.top).max().getAsInt() : 0;
+		return max;
 	}
 
 	private static int getLowestCol(SerializedState s) {
-		return Arrays.stream(s.top).min().getAsInt();
+		return Arrays.stream(s.top).min().isPresent() ? Arrays.stream(s.top).min().getAsInt() : 0;
 	}
 
 	private static int getWellSums(int[][] field) {
@@ -323,6 +324,7 @@ public class PlayerSkeleton {
 			s.makeMove(p.pickMove(s,s.legalMoves(),DEFAULT_WEIGHTS));
 			s.draw();
 			s.drawNext(0,0);
+			System.out.println("You have completed "+s.getRowsCleared()+" rows.");
 //			try {
 //				Thread.sleep(300);
 //			} catch (InterruptedException e) {
@@ -343,13 +345,13 @@ class SerializedState {
 	final int cleared;
 
 	SerializedState() {
-			this(new int[State.ROWS][State.COLS],
-					new int[State.COLS],
-					0,
-					randomPiece(),
-					false,
-					0);
-			}
+		this(new int[State.ROWS][State.COLS],
+				new int[State.COLS],
+				0,
+				randomPiece(),
+				false,
+				0);
+	}
 
 	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
 		this.field = field;
