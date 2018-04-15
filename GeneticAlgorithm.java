@@ -1,59 +1,47 @@
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
-
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GeneticAlgorithm {
-    private static ArrayList<Genome> population;
-    private int populationSize = 3;
+    private static ArrayList<double[]> population;
+    private static int populationSize = 6;                         ;
     private static int numberOfFeatures = 6; //highestCol and lowestCol are replaced by heightDifference
-    /*features of a state, we randomly define a state in the begining*/
-    private static int blockadeWeightIndex = 0;
-    private static int edgeHeightWeightIndex = 1;
-    private static int heightDifferenceWeightIndex = 2;
-    private static int holesWeightIndex = 3;
-    private static int islandWeightIndex = 4;
-    private static int parityWeightIndex = 5;
+    /*0: rowTransitions 1: columnTransitions 2: heightDifferenceWeight 3: holesWeight 4: rowsCleared 5: wells*/
+    //DEFAULT_WEIGHTS = {-1.3343042352708279, -0.7720367230689456, -0.0153739588059979, -0.8663918638956187, 1.9153960163441597, -0.48611250378933557};
+    private static double[] heuristic = {-1, -1, -1, -1, 5, -1};
+    private static double threadhold = 0.1;
+    private static double parentsSelectionRatio = 0.5;
+    private static double[] bestWeights = new double[numberOfFeatures];
+    private static double bestFitness = Integer.MIN_VALUE;
+    private static int generations = 6;
 
-
-    public ArrayList<Genome> initializePopulation () {
-        population = new ArrayList<>();
+    public static ArrayList<double[]> initializePopulation () {
+        population = new ArrayList<>(populationSize);
         //initial random weights for each feature
-        for (int i = 0; i < populationSize; i++) {
-            int id = i;
-            Genome genome = new Genome(id);
-            population.add(genome);
-        }
+        IntStream.range(0, populationSize+1)
+                .parallel()
+                .forEach(i -> {
+                    //individual
+                    double[] weights =  new double[numberOfFeatures];
+                    for (int j = 0; j< weights.length; j++) {weights[j] = Math.random() * heuristic[j];}
+                    population.add(weights);
+                });
         return population;
     }
 
     /*
      * evaluate sets of weights
-     * first we need to evalute weights for every individual of the population
+     * first we need to evaluate weights for every individual of the population
      */
-    private static double evaluateIndividual (Genome individual, State s) {
-        //put weights into the array for evaluation 
-        double[] weights = new double[6];
-        weights[blockadeWeightIndex] = individual.getBlockadeWeight();
-        weights[edgeHeightWeightIndex] = individual.getEdgeHeightWeight();
-        weights[heightDifferenceWeightIndex] = individual.getHeightDifferenceWeight();
-        weights[holesWeightIndex] = individual.getHolesWeight();
-        weights[islandWeightIndex] = individual.getIslandWeight();
-        weights[parityWeightIndex] = individual.getParityWeight();
-
+    private static double evaluateIndividual (double[] individual, State s) {
         double score = 0;
-        new TFrame(s);
         PlayerSkeleton p = new PlayerSkeleton();
         while(!s.hasLost()) {
-            s.makeMove(p.pickMove(s,s.legalMoves(), weights));
-            s.draw();
-            s.drawNext(0,0);
-            //comment the thread to speed up the program
-//            try {
-//                Thread.sleep(300);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
+            s.makeMove(p.pickMove(s,s.legalMoves(), individual));
+            System.out.println(s.getRowsCleared() + " rows cleared.");
         }
         score = s.getRowsCleared();
 
@@ -62,127 +50,175 @@ public class GeneticAlgorithm {
 
     /*
      * give score to each set of weights
-     * return the arraylist of pair(id, score): id: id for that set of weights; score: evaluation score
      */
-    public static HashMap<Integer, Double> evaluatePopulation (ArrayList<Genome> population, State s) {
-        HashMap<Integer, Double> evaluationScore = new HashMap<Integer, Double>();
+    public static List<Double> evaluatePopulation (ArrayList<double[]> population) {
+        List<Double> fitness = population
+                .parallelStream()
+                .map(i -> evaluateIndividual(i, new State())
+                ).collect(Collectors.toList());
 
-        //evaluate each individual in the population.
-        //fixed index from a set of weights to its evaluation score
-        for (int i = 0; i < population.size(); i++) {
-            /* Map<id, score> */
-            State newState = new State();
-            evaluationScore.put(i, evaluateIndividual(population.get(i), newState));
-        }
-
-        return evaluationScore;
+        return fitness;
     }
 
     /*
-     * update population, each time choose the first and second sets of weight 
-     * their child will replace the worst in the list
+     * update population, each time choose a certain proportion of the population and produce children
+     * children will make up another 50% of the population
      * return an updated population
      */
-    public static ArrayList<Genome> evolve (ArrayList<Genome> population, HashMap<Integer, Double> evaluationScore) {
-        /* selection of parents */
-        int[] parents = selectParent(evaluationScore);
-        int mom = parents[0];
-        int dad = parents[1];
-
-        Genome momGenome = population.get(mom);
-        Genome dadGenome = population.get(dad);
-
-        /* cross over */
-        Random random = new Random();
-        int id = selectReplacement(evaluationScore);
-        double holesWeight = random.nextBoolean() ? momGenome.getHolesWeight() : dadGenome.getHolesWeight();
-        double heightDifferenceWeight = random.nextBoolean() ? momGenome.getHeightDifferenceWeight() : dadGenome.getHeightDifferenceWeight();
-        double islandWeight = random.nextBoolean() ? momGenome.getIslandWeight() : dadGenome.getIslandWeight();
-        double parityWeight = random.nextBoolean() ? momGenome.getParityWeight() : dadGenome.getParityWeight();
-        double edgeHeightWeight = random.nextBoolean() ? momGenome.getEdgeHeightWeight() : dadGenome.getEdgeHeightWeight();
-        double blockadeWeight = random.nextBoolean() ? momGenome.getBlockadeWeight() : dadGenome.getBlockadeWeight();
-        Genome child = new Genome(id, blockadeWeight, edgeHeightWeight, heightDifferenceWeight, holesWeight, islandWeight, parityWeight);
-
-        /* mutation */
-        int randomIndex = (int) Math.floor(Math.random() * (numberOfFeatures - 1));
-        if (randomIndex == 0) child.setBlockadeWeight(-100 * Math.random());
-        else if (randomIndex == 1) child.setEdgeHeightWeight( -100 * Math.random());
-        else if (randomIndex == 2) child.setHeightDifferenceWeight( 100 * Math.random());
-        else if (randomIndex == 3) child.setHolesWeight( -100 * Math.random());
-        else if (randomIndex == 4) child.setIslandWeight( 100 * Math.random());
-        else child.setParityWeight( 100 * Math.random());
-
-        /* new born will replace the worst scored weights in the list, so population is evolved */
-        population.set(selectReplacement(evaluationScore), child);
-
-        return population;
+    public static ArrayList<double[]> evolve (ArrayList<double[]> population, List<Double> evaluationScore) {
+        return updatePopulation(selectParent(evaluationScore, population), evaluationScore);
     }
 
     /**
+     * top parentsSelectionRatio (a percentage) of the population is chosen for evolution
      * return the ids of parents
      */
-    public static int[] selectParent(HashMap<Integer, Double> evaluationScore) {
-        int[] parents = new int[2];
-        int bestId = 0;
-        double currBestScore = 0;
+    private static List<double[]> selectParent(List<Double> evaluationScore, ArrayList<double[]> population) {
+        // certain percentage of population
+        List<double[]> parents = new ArrayList<double[]>();
 
-        //first parent
-        for (Integer id : evaluationScore.keySet()) {
-            if(evaluationScore.get(id) > currBestScore){
-                bestId = id;
-                currBestScore = evaluationScore.get(id);
-            }
-        }
-        parents[0] = bestId;
+        List<Double> sortedScore = new ArrayList<Double>(evaluationScore);
+        sortedScore.sort((a, b) -> Double.compare(b, a));
+        double benchmark = sortedScore.get((int) Math.floor(populationSize * parentsSelectionRatio));
 
-        //second parent
-        double bestScore = evaluationScore.get(bestId);
-        currBestScore = 0;
-        int saveId = bestId;
-        evaluationScore.put(saveId, Double.NEGATIVE_INFINITY);
-        for (Integer id : evaluationScore.keySet()) {
-            if(evaluationScore.get(id) > currBestScore){
-                bestId = id;
-                currBestScore = evaluationScore.get(id);
-            }
-        }
-        parents[1] = bestId;
-        evaluationScore.put(saveId, bestScore);
+        //select parents
+        IntStream.range(0, populationSize)
+                .parallel()
+                .forEach(i -> {
+                   if(evaluationScore.get(i) >= benchmark) {
+                       parents.add(population.get(i));
+                       System.out.println("score seleceted: " + evaluationScore.get(i));
+                   }
+                });
 
         return parents;
     }
 
-    /**
-     * return the ids of parents
-     */
-    public static int selectReplacement(HashMap<Integer, Double> evaluationScore) {
-        int replaceId = 0;
-        double currScore = Double.POSITIVE_INFINITY;
+    private static ArrayList<double[]> updatePopulation(List<double[]> parents, List<Double> fitness) {
+        int childrenNum = population.size() - parents.size();
+        ArrayList<double[]> newPopulation = new ArrayList<double[]>();
 
-        for (Integer id : evaluationScore.keySet()) {
-            if(evaluationScore.get(id) < currScore){
-                replaceId = id;
-                currScore = evaluationScore.get(id);
+        //add parents in newPopulation
+        IntStream.range(0, parents.size())
+                .parallel()
+                .forEach(i -> {
+                    newPopulation.add(parents.get(i));
+                });
+
+
+        for (int i = 0; i < childrenNum; i++) {
+
+            List<double[]> selParents = tournamentSelection(fitness, parents);
+
+            //get parents
+            double[] momGenome = selParents.get(0);
+            double[] dadGenome = selParents.get(1);
+
+            /* crossover */
+            double[] child = crossover(momGenome, dadGenome);
+
+            /* mutation */
+            Random mutation = new Random();
+            boolean isMutation = false;
+            double randomMutation = mutation.nextGaussian();
+            if(randomMutation > threadhold) {
+                isMutation = true;
             }
+            if(isMutation) {
+                mutation(child);
+            }
+
+            newPopulation.add(child);
         }
 
-        return replaceId;
+        return newPopulation;
+    }
+
+    /* Swap Mutation */
+    private static double[] mutation (double[] child) {
+        /* swap */
+        int randomIndex1 = (int) Math.floor(Math.random() * (numberOfFeatures));
+        int randomIndex2 = (int) Math.floor(Math.random() * (numberOfFeatures));
+        double temp = child[randomIndex1];
+        child[randomIndex1] = child[randomIndex2];
+        child[randomIndex2] = temp;
+
+        return child;
+    }
+
+    /* cross over */
+    private static double[] crossover (double[] momGenome, double[] dadGenome) {
+        Random random = new Random();
+        double[] child = new double[momGenome.length];
+        IntStream.range(0, momGenome.length)
+                .parallel()
+                .forEach(i -> {
+                    child[i] = random.nextBoolean() ? momGenome[i] : dadGenome[i];
+                });
+        return child;
+    }
+
+    /*
+    * Tournament selection, with top 10% parents to select parents for crossover
+    * */
+    private static List<double[]> tournamentSelection(List<Double> fitness, List<double[]> parents) {
+        List<double[]> selParents = new ArrayList<>();
+        double bestFitness = Double.NEGATIVE_INFINITY;
+        int best = 0;
+        //select 2 parents
+        for(int j = 0; j< 2; j++) {
+            //binary tournament selection
+            for (int i = 0; i < 2; i++) {
+                int individual = (int) Math.floor(Math.random() * parents.size());
+                double individualFitness = fitness.get(individual);
+                if (bestFitness == Double.NEGATIVE_INFINITY || individualFitness > bestFitness) {
+                    bestFitness = individualFitness;
+                    best = individual;
+                }
+            }
+            selParents.add(parents.get(best));
+            //reset best for next round
+            bestFitness = Double.NEGATIVE_INFINITY;
+        }
+
+        return selParents;
+    }
+
+    public void run() {
+        System.out.print("Initialize population: ");
+        ArrayList<double[]> population = initializePopulation();
+        //double[] population = {-1.3343042352708279, -0.7720367230689456, -0.0153739588059979, -0.8663918638956187, 1.9153960163441597, -0.48611250378933557};
+
+        //initial population
+        List<Double> scores = evaluatePopulation(population);
+        System.out.print("Initial evaluation: ");
+        System.out.println(Arrays.toString(scores.toArray()));
+
+        for(int j = 0; j < generations; j++) {
+            System.out.println("Evolution " + j + ": ");
+            //evolution
+            population = evolve(population, scores);
+
+            //after evolving
+            scores = evaluatePopulation(population);
+            for(int i = 0; i < scores.size(); i++) {
+                if(scores.get(i) > bestFitness) {
+                    bestFitness = scores.get(i);
+                    bestWeights = population.get(i);
+                }
+            }
+
+            System.out.println("Best fitness: " + bestFitness);
+            System.out.print("Best weight: ");
+            System.out.println(Arrays.toString(bestWeights));
+
+        }
+
     }
 
     /* test */
     public static void main(String[] args) {
         GeneticAlgorithm GA =  new GeneticAlgorithm();
-        ArrayList<Genome> population = GA.initializePopulation();
-        State s = new State();
-
-        HashMap<Integer, Double> scores = evaluatePopulation(population, s);
-        for (Integer id : scores.keySet()) {
-            System.out.println(id + ": "+ scores.get(id));
-        }
-        population = evolve(population, scores);
-        scores = evaluatePopulation(population, s);
-        for (Integer id : scores.keySet()) {
-            System.out.println(id + ": "+ scores.get(id));
-        }
+        GA.run();
     }
 }
