@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -80,120 +81,158 @@ public class PlayerSkeleton {
 
 		double valuation = 0;
 
-		// This should eventually be the full list of evaluation metrics
-		valuation += s.cleared;
-		valuation += (getHighestCol(s.field) - getLowestCol(s.field)) * weights[2];
+		valuation += (getHighestCol(s) - getLowestCol(s)) * weights[2];
 		valuation += getHolesCount(s.field, s.top) * weights[3];
-		valuation += getBlockadeCount(s.field, s.top) * weights[0];
-		valuation += getParityCount(s.field) * weights[5] ;
-		valuation += getTotalHeightDiff(s.top) * weights[1];
-		valuation += getIslandCount(s.field) * weights[4];
+		valuation += rowTransitions(s.field) * weights[0];
+		valuation += getWellSums(s.field) * weights[5] ;
+		valuation += columnTransitions(s.field) * weights[1];
+		valuation += s.cleared * weights[4];
 
 		return valuation;
-	}
-  
-  private static int getIslandCount(int[][] field) {
-		return 0;
 	}
 
 	private static int getHolesCount(int[][] field, int[] top) {
 		int holeCount = 0;
-		boolean isHole = false;
-
 		for (int i = 0; i < State.COLS; i++) {
 			for (int j = top[i]; j >= 0; j--) {
-				if (field[j][i] != 0) {
-					isHole = true;
-				} else if(isHole && field[j][i] == 0) {
+				if(field[j][i] == 0) {
 					holeCount++;
-					isHole = false;
 				}
 			}
-			isHole = false;
 		}
 
 		return holeCount;
 	}
 
-	private static int getBlockadeCount (int[][] field, int[] top) {
-
-		int totalBlockade = 0;
-		int tempBlockade = 0;
-		boolean isHole = false;
-		for (int i = 0; i < State.COLS; i++) {
-			for (int j = top[i]; j >= 0; j--) {
-				if (field[j][i] != 0) {
-					isHole = true;
-					tempBlockade++;
-				} else if (isHole) {
-					totalBlockade += tempBlockade;
-					tempBlockade = 0;
-					isHole = false;
-				}
-			}
-			//reset tempBlockade when changing cols
-			tempBlockade = 0;
-		}
-		return totalBlockade;
+	private static int getHighestCol(SerializedState s) {
+		return Arrays.stream(s.top).max().getAsInt();
 	}
 
-	private static int getParityCount (int[][] field) {
-
-		int filledCount = 0;
-		for (int i = 0; i < State.COLS; i++) {
-			for (int j = State.ROWS - 1; j >= 0; j--) {
-				if (field [j][i] != 0) {
-					filledCount++;
-				}
-			}
-		}
-		int parity = (State.COLS * State.ROWS) - filledCount;
-		if (parity < 0) {
-			return parity * -1;
-		} else {
-			return parity;
-		}
+	private static int getLowestCol(SerializedState s) {
+		return Arrays.stream(s.top).min().getAsInt();
 	}
 
-	private static int getTotalHeightDiff (int[] top) {
+	private static int getWellSums(int[][] field) {
+		int wellSum = 0;
+		int test = 0;
 
-		int totalDiff = 0;
-		for (int i = 1; i < top.length; i++) {
-			int diff = top[i] - top[i-1];
-
-			if (diff < 0) {
-				diff = diff * -1;
-			}
-			totalDiff += diff;
-		}
-
-		return totalDiff;
-	}
-
-	private static int getHighestCol(int[][] field) {
-		return getTops(field).max().getAsInt();
-	}
-
-	private static int getLowestCol(int[][] field) {
-		return getTops(field).min().getAsInt();
-	}
-
-	/*
-	 * Returns a stream of the height of the top piece in each column
-	 */
-	private static IntStream getTops(int[][] field) {
-		return IntStream.range(0, State.COLS)
-				.map(j -> {
-					for (int i = State.ROWS-1; i >= 0; i--) {
-						if (field[i][j] != 0) {
-							return i;
+		// Case inner columns
+		for (int i = 1; i < State.COLS - 1; i++) {
+			int inc = 1;
+			int sum = 0;
+			test++;
+			for (int j = field.length - 1; j >= 0; j--) {
+				if (field[j][i] == 0 && field[j][i - 1] != 0 && field[j][i + 1] != 0) {
+					sum += inc;
+					inc++;
+					test++;
+					for (int k = j - 1; k >= 0; k--) {
+						if (field[k][i] == 0) {
+							sum += inc;
+							inc++;
+							test++;
+						} else {
+							wellSum += sum;
+							break;
 						}
 					}
-					return 0;
-				});
+				}
+			}
+		}
+
+		// Case if well is on the left side of the wall
+		for (int j = field.length - 1; j >= 0; j--) {
+			int inc = 1;
+			int sum = 0;
+			if (field[j][0] == 0 && field[j][1] != 0) {
+				sum += inc;
+				inc++;
+				test++;
+				for (int k = j - 1; k >= 0; k--) {
+					if (field[k][0] == 0) {
+						sum += inc;
+						inc++;
+						test++;
+					} else {
+						wellSum += sum;
+						break;
+					}
+				}
+			}
+		}
+
+		// Case if well is on the right side of the wall
+		for (int j = field.length - 1; j >= 0; j--) {
+			int inc = 1;
+			int sum = 0;
+			if (field[j][State.COLS - 1] == 0 && field[j][State.COLS - 2] != 0) {
+				sum += inc;
+				inc++;
+				test++;
+				for (int k = j - 1; k >= 0; k--) {
+					if (field[k][State.COLS - 1] == 0) {
+						sum += inc;
+						inc++;
+						test++;
+					} else {
+						wellSum += sum;
+						break;
+					}
+				}
+			}
+		}
+		return test;
 	}
 
-	private static SerializedState transition(SerializedState s, int[] move) {
+
+	public static int rowTransitions(int[][] field) {
+		int tr = 0;
+
+		for (int i = 0; i < field.length; i++) {
+			boolean isEmptyCell = field[i][0] == 0;
+			for (int j = 1; j < field[i].length; j++) {
+				if (isEmptyCell && field[i][j] != 0) {
+					tr++;
+				}
+
+				else if (!isEmptyCell && field[i][j] == 0) {
+					tr++;
+				}
+
+				isEmptyCell = field[i][j] == 0;
+			}
+		}
+		return tr;
+	}
+
+	public static int columnTransitions(int[][] field) {
+		int tr = 0;
+		boolean isEmptyCell;
+
+		for (int i = 0; i < State.COLS; i++) {
+			isEmptyCell = field[0][i] == 0;
+			for (int j = 1; j < State.ROWS; j++) {
+				if (isEmptyCell && field[j][i] != 0) {
+					tr++;
+				}
+
+				if (!isEmptyCell && field[j][i] == 0) {
+					tr++;
+				}
+
+				isEmptyCell = field[j][i] == 0;
+			}
+		}
+
+		return tr;
+
+	}
+
+	public static SerializedState transition(SerializedState s, int[] move) {
+		return transition(s, move, SerializedState.randomPiece());
+	}
+
+	private static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
 		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
@@ -229,7 +268,8 @@ public class PlayerSkeleton {
 
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
-			return new SerializedState(field, top, turn, nextPiece, s.pieceHistory, true, cleared);
+			lost = true;
+			return new SerializedState(field, top, followingPiece, turn + 1, true, cleared);
 		}
 
 
@@ -276,8 +316,7 @@ public class PlayerSkeleton {
 				}
 			}
 		}
-
-		return new SerializedState(field, top, turn, nextPiece, s.pieceHistory, lost, cleared);
+		return new SerializedState(field, top, turn + 1, followingPiece, lost, cleared);
 	}
 
 	public static void main(String[] args) {
@@ -308,7 +347,16 @@ class SerializedState {
 	final int cleared;
 	final int[] pieceHistory;
 
-	SerializedState(int[][] field, int[] top, int turn, int nextPiece, int[] pieceHistory, boolean lost, int cleared) {
+	SerializedState() {
+			this(new int[State.ROWS][State.COLS],
+					new int[State.COLS],
+					0,
+					randomPiece(),
+					false,
+					0);
+			}
+
+	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
 		this.field = field;
 		this.top = top;
 		this.turn = turn;
@@ -320,5 +368,9 @@ class SerializedState {
 
 	SerializedState(State s, int[] pieceHistory) {
 		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
+	}
+
+	public static int randomPiece() {
+		return (int) (Math.random() * State.N_PIECES);
 	}
 }
