@@ -9,17 +9,13 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
-	public final static double[] DEFAULT_WEIGHTS = {-5.909978, -13.523018, 5.764364, -96.452873, 36.040035, 34.941766 };
-	private int[] pieceHistory = new int[State.N_PIECES];
-
+	public final static double[] DEFAULT_WEIGHTS = {-0.49301994673966787, -0.8310718689117889, -0.3988538321216405, -0.7865373735881536, 1.206862797515011, -0.29890681382619344};
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
-		pieceHistory[s.nextPiece]++;
-
 		// Serialize our state
-		SerializedState state = new SerializedState(s, pieceHistory);
+		SerializedState state = new SerializedState(s);
 
 		// Pick the move with highest valuation
 		return expectimax(state, legalMoves, weights, 1);
@@ -67,15 +63,13 @@ public class PlayerSkeleton {
 			return IntStream.range(0, State.N_PIECES)
 					.parallel()
 					.boxed()
-					.map(piece -> {
-						SerializedState state = new SerializedState(s.field, s.top, s.turn, piece, s.pieceHistory, s.lost, s.cleared);
-                        return s.pieceHistory[piece] * expectimax(state, weights, depth, true);
-					})
-					.reduce(0.0, Double::sum) / s.turn;
+					.map(piece -> new SerializedState(s.field, s.top, s.turn, piece, s.lost, s.cleared))
+					.map(state -> expectimax(state, weights, depth, true))
+					.reduce(0.0, Double::sum) / State.N_PIECES;
 		}
 	}
 
-	public static double evaluate(SerializedState s, double[] weights) {
+	private static double evaluate(SerializedState s, double[] weights) {
 		if (s.lost) {
 			return Double.NEGATIVE_INFINITY;
 		}
@@ -106,11 +100,12 @@ public class PlayerSkeleton {
 	}
 
 	private static int getHighestCol(SerializedState s) {
-		return Arrays.stream(s.top).max().getAsInt();
+		int max = Arrays.stream(s.top).max().isPresent() ? Arrays.stream(s.top).max().getAsInt() : 0;
+		return max;
 	}
 
 	private static int getLowestCol(SerializedState s) {
-		return Arrays.stream(s.top).min().getAsInt();
+		return Arrays.stream(s.top).min().isPresent() ? Arrays.stream(s.top).min().getAsInt() : 0;
 	}
 
 	private static int getWellSums(int[][] field) {
@@ -226,13 +221,14 @@ public class PlayerSkeleton {
 		}
 
 		return tr;
+
 	}
 
 	public static SerializedState transition(SerializedState s, int[] move) {
 		return transition(s, move, SerializedState.randomPiece());
 	}
 
-	public static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
+	private static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
 		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
@@ -316,6 +312,7 @@ public class PlayerSkeleton {
 				}
 			}
 		}
+
 		return new SerializedState(field, top, turn + 1, followingPiece, lost, cleared);
 	}
 
@@ -327,6 +324,7 @@ public class PlayerSkeleton {
 			s.makeMove(p.pickMove(s,s.legalMoves(),DEFAULT_WEIGHTS));
 			s.draw();
 			s.drawNext(0,0);
+			System.out.println("You have completed "+s.getRowsCleared()+" rows.");
 //			try {
 //				Thread.sleep(300);
 //			} catch (InterruptedException e) {
@@ -345,16 +343,14 @@ class SerializedState {
 	final int nextPiece;
 	final boolean lost;
 	final int cleared;
-	final int[] pieceHistory;
 
 	SerializedState() {
-			this(new int[State.ROWS][State.COLS],
-					new int[State.COLS],
-					0,
-					randomPiece(),
-					false,
-					0);
-			}
+		this(new int[State.ROWS][State.COLS],
+				new int[State.COLS],
+				0,
+				randomPiece(),
+				false,
+				0);
 	}
 
 	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
@@ -364,24 +360,13 @@ class SerializedState {
 		this.nextPiece = nextPiece;
 		this.lost = lost;
 		this.cleared = cleared;
-		this.pieceHistory = pieceHistory;
-	}
-
-	SerializedState(State s, int[] pieceHistory) {
-		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
 	}
 
 	SerializedState(State s) {
-		this(s.getField(),
-				s.getTop(),
-				s.getTurnNumber(),
-				s.getNextPiece(),
-				s.lost,
-				s.getRowsCleared());
-    
+		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), s.lost, s.getRowsCleared());
+	}
+
 	public static int randomPiece() {
 		return (int) (Math.random() * State.N_PIECES);
 	}
-
-
 }
