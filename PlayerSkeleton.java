@@ -9,8 +9,9 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
-	public final static double[] DEFAULT_WEIGHTS = {1, -2, 2, -99, -2, 0, -10};
+	public final static double[] DEFAULT_WEIGHTS = {-5.909978, -13.523018, 5.764364, -96.452873, 36.040035, 34.941766 };
 	private int[] pieceHistory = new int[State.N_PIECES];
+
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
@@ -74,7 +75,7 @@ public class PlayerSkeleton {
 		}
 	}
 
-	private static double evaluate(SerializedState s, double[] weights) {
+	public static double evaluate(SerializedState s, double[] weights) {
 		if (s.lost) {
 			return Double.NEGATIVE_INFINITY;
 		}
@@ -225,14 +226,13 @@ public class PlayerSkeleton {
 		}
 
 		return tr;
-
 	}
 
 	public static SerializedState transition(SerializedState s, int[] move) {
 		return transition(s, move, SerializedState.randomPiece());
 	}
 
-	private static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
+	public static SerializedState transition(SerializedState s, int[] move, int followingPiece) {
 		int nextPiece = s.nextPiece;
 		int orient = move[0];
 		int slot = move[1];
@@ -355,6 +355,7 @@ class SerializedState {
 					false,
 					0);
 			}
+	}
 
 	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
 		this.field = field;
@@ -370,7 +371,17 @@ class SerializedState {
 		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
 	}
 
+	SerializedState(State s) {
+		this(s.getField(),
+				s.getTop(),
+				s.getTurnNumber(),
+				s.getNextPiece(),
+				s.lost,
+				s.getRowsCleared());
+    
 	public static int randomPiece() {
 		return (int) (Math.random() * State.N_PIECES);
 	}
+
+
 }
