@@ -41,7 +41,7 @@ public class GeneticAlgorithm {
         PlayerSkeleton p = new PlayerSkeleton();
         while(!s.hasLost()) {
             s.makeMove(p.pickMove(s,s.legalMoves(), individual));
-            System.out.println(s.getRowsCleared() + " rows cleared.");
+            if(s.getRowsCleared() % 1000 ==0) System.out.println(s.getRowsCleared() + " rows cleared.");
         }
         score = s.getRowsCleared();
 
@@ -163,22 +163,22 @@ public class GeneticAlgorithm {
     * */
     private static List<double[]> tournamentSelection(List<Double> fitness, List<double[]> parents) {
         List<double[]> selParents = new ArrayList<>();
-        double bestFitness = Double.NEGATIVE_INFINITY;
-        int best = 0;
+        double betterFitness = Double.NEGATIVE_INFINITY;
+        int better = 0;
         //select 2 parents
         for(int j = 0; j< 2; j++) {
             //binary tournament selection
             for (int i = 0; i < 2; i++) {
                 int individual = (int) Math.floor(Math.random() * parents.size());
                 double individualFitness = fitness.get(individual);
-                if (bestFitness == Double.NEGATIVE_INFINITY || individualFitness > bestFitness) {
-                    bestFitness = individualFitness;
-                    best = individual;
+                if (betterFitness == Double.NEGATIVE_INFINITY || individualFitness > betterFitness) {
+                    betterFitness = individualFitness;
+                    better = individual;
                 }
             }
-            selParents.add(parents.get(best));
+            selParents.add(parents.get(better));
             //reset best for next round
-            bestFitness = Double.NEGATIVE_INFINITY;
+            betterFitness = Double.NEGATIVE_INFINITY;
         }
 
         return selParents;
