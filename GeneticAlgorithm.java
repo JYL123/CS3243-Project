@@ -4,6 +4,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.StringTokenizer;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.File;
+import java.io.IOException;
 
 public class GeneticAlgorithm {
     private static ArrayList<double[]> population;
@@ -17,18 +24,41 @@ public class GeneticAlgorithm {
     private static double[] bestWeights = new double[numberOfFeatures];
     private static double bestFitness = Integer.MIN_VALUE;
     private static int generations = 6;
+	private static int writeIterations = 0;
+	private static int bestScoreSoFar = 0;
 
     public static ArrayList<double[]> initializePopulation () {
         population = new ArrayList<>(populationSize);
         //initial random weights for each feature
-        IntStream.range(0, populationSize+1)
-                .parallel()
-                .forEach(i -> {
-                    //individual
-                    double[] weights =  new double[numberOfFeatures];
-                    for (int j = 0; j< weights.length; j++) {weights[j] = Math.random() * heuristic[j];}
-                    population.add(weights);
-                });
+		BufferedReader in = null;
+		File f = new File("weights.txt");
+		if (f.length() != 0) {
+			try {
+				in = new BufferedReader(new FileReader(f));
+				StringTokenizer st = new StringTokenizer(in.readLine());
+				System.out.println("Read weights! Score is " + st.nextToken());
+				double[] weights =  new double[numberOfFeatures];
+				System.out.print("Weights are:");
+				for (int i = 0; i < weights.length; i++) {
+					weights[i] = Double.parseDouble(st.nextToken());
+					System.out.print(" " + weights[i]);
+				}
+				System.out.println();
+				population.add(weights);
+				in.close();
+			} catch(IOException e) {
+			}
+		} else {
+			IntStream.range(0, populationSize+1)
+			.parallel()
+			.forEach(i -> {
+				//individual
+				double[] weights =  new double[numberOfFeatures];
+				for (int j = 0; j< weights.length; j++) {weights[j] = Math.random() * heuristic[j];}
+				population.add(weights);
+			});
+		}
+
         return population;
     }
 
@@ -36,18 +66,30 @@ public class GeneticAlgorithm {
      * evaluate sets of weights
      * first we need to evaluate weights for every individual of the population
      */
-    private static double evaluateIndividual (double[] individual, State s) {
+    private static double evaluateIndividual(double[] individual, State s) {
         double score = 0;
         PlayerSkeleton p = new PlayerSkeleton();
-        while(!s.hasLost()) {
+		try {
+			while(!s.hasLost()) {
             s.makeMove(p.pickMove(s,s.legalMoves(), individual));
-<<<<<<< HEAD
-            if(s.getRowsCleared() % 1000 == 0)System.out.println(s.getRowsCleared() + " rows cleared.");
-=======
-            if(s.getRowsCleared() % 1000 ==0 && s.getRowsCleared() != 0) System.out.println(s.getRowsCleared() + " rows cleared.");
->>>>>>> 73dc983a9cbb90838fbea69a3bfc6d058809daed
+            if(s.getRowsCleared() % 1000 == 0 && s.getRowsCleared() != 0) {
+				writeIterations = (writeIterations + 1) % 20;
+				if (writeIterations == 1) {
+					BufferedWriter out = new BufferedWriter(new FileWriter("weights.txt"));
+					StringBuffer buf = new StringBuffer();
+					buf.append(s.getRowsCleared());
+					for (double d : individual) {
+						buf.append(" " + d);
+					}
+					out.write(buf.toString(), 0, buf.length());
+					out.close();
+				}
+				System.out.println(s.getRowsCleared() + " rows cleared.");
+			}
         }
         score = s.getRowsCleared();
+		} catch(IOException e) {
+		}
 
         return score;
     }
