@@ -7,15 +7,16 @@ import java.util.stream.Stream;
 
 
 /**
- * The optimal result is obtained from this file.
- * "Optimal": 1. num of rows cleared; 2. learning rate (increment, fluctuation)
+ * Test with 7 parameters: the learning is slower.
+ * When highestCol = lowestCol, when col heights are same (not including other cols),
+ * the factor of the difference in col should be zero.
  */
-public class TestParallelGA {
+public class TestParallelGA2 {
 
-    private static double[] HEURISTICS = {-1, -1, -1, -1, 5, -1};
+    private static double[] HEURISTICS = {-1, -1, -1, 1, -1, 5, -1};
     private static int populationSize = 25;
     private static double parentsSelectionRatio = 0.5;
-    private static int numberOfFeatures = 6;
+    private static int numberOfFeatures = 7;
     private static double threadhold = 0.1;
     private double bestFitness = 0;
     private double[] bestWeights = new double[numberOfFeatures];
@@ -29,7 +30,7 @@ public class TestParallelGA {
     private final double matingRate;
     private final double mutationProbability;
 
-    TestParallelGA(int childrenCount, int parentCount, int simulationsPerChild, int generations, double survivalRate, double matingRate, double mutationProbability) {
+    TestParallelGA2(int childrenCount, int parentCount, int simulationsPerChild, int generations, double survivalRate, double matingRate, double mutationProbability) {
         this.childrenCount = childrenCount;
         this.parentCount = parentCount;
         this.simulationsPerChild = simulationsPerChild;
@@ -50,7 +51,7 @@ public class TestParallelGA {
         }
     }
 
-    // get the average over 5 simulation per child
+    //TODO: RUN 5 TIMES PER CHILD AND GET THE <SUM>?
     double evaluateWeights(double[] weights) {
         return IntStream.range(0, simulationsPerChild)
                 .parallel()
@@ -161,7 +162,6 @@ public class TestParallelGA {
         return newPopulation;
     }
 
-    //TODO: avoid mutating on rowsCleared? it will not be selected into the next round of generation if the performance is poor.
     /* Swap Mutation */
     private static double[] mutation (double[] child) {
         /* swap */
@@ -250,13 +250,14 @@ public class TestParallelGA {
                 System.out.printf("%f, ", w);
             }
             System.out.println("}");
+            System.out.println("");
         }
     }
 
     public static void main(String[] args) {
         State s = new State();
 
-        TestParallelGA ga = new TestParallelGA(50, 2, 5, 100, 0.25, 0.5, 0.1);
+        TestParallelGA2 ga = new TestParallelGA2(50, 2, 5, 100, 0.25, 0.5, 0.1);
         ga.run();
     }
 }
