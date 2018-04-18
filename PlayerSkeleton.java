@@ -336,42 +336,42 @@ public class PlayerSkeleton {
 
 }
 
-class SerializedState {
-	final int[][] field;
-	final int[] top;
-	final int turn;
-	final int nextPiece;
-	final boolean lost;
-	final int cleared;
-	final int[] pieceHistory;
-
-	SerializedState() {
-		this(new int[State.ROWS][State.COLS],
-				new int[State.COLS],
-				0,
-				randomPiece(),
-				new int[State.N_PIECES],
-				false,
-				0
-				);
-	}
-
-	SerializedState(int[][] field, int[] top, int turn, int nextPiece, int[] pieceHistory, boolean lost, int cleared) {
-		this.field = field;
-		this.top = top;
-		this.turn = turn;
-		this.nextPiece = nextPiece;
-		this.lost = lost;
-		this.cleared = cleared;
-		this.pieceHistory = pieceHistory;
-	}
-
-	SerializedState(State s,  int[] pieceHistory) {
-		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
-	}
-
-	public static int randomPiece() {
-		return (int) (Math.random() * State.N_PIECES);
-	}
-}
+//class SerializedState {
+//	final int[][] field;
+//	final int[] top;
+//	final int turn;
+//	final int nextPiece;
+//	final boolean lost;
+//	final int cleared;
+//	final int[] pieceHistory;
+//
+//	SerializedState() {
+//		this(new int[State.ROWS][State.COLS],
+//				new int[State.COLS],
+//				0,
+//				randomPiece(),
+//				new int[State.N_PIECES],
+//				false,
+//				0
+//				);
+//	}
+//
+//	SerializedState(int[][] field, int[] top, int turn, int nextPiece, int[] pieceHistory, boolean lost, int cleared) {
+//		this.field = field;
+//		this.top = top;
+//		this.turn = turn;
+//		this.nextPiece = nextPiece;
+//		this.lost = lost;
+//		this.cleared = cleared;
+//		this.pieceHistory = pieceHistory;
+//	}
+//
+//	SerializedState(State s,  int[] pieceHistory) {
+//		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
+//	}
+//
+//	public static int randomPiece() {
+//		return (int) (Math.random() * State.N_PIECES);
+//	}
+//}
 
