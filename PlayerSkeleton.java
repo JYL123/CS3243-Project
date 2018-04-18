@@ -6,13 +6,16 @@ import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
-	public final static double[] DEFAULT_WEIGHTS = {-0.49301994673966787, -0.8310718689117889, -0.3988538321216405, -0.7865373735881536, 1.206862797515011, -0.29890681382619344};
+	public final static double[] DEFAULT_WEIGHTS = {-0.5409023035972038, -0.5779452238352727, -0.08382226928735714, -0.7237267127345023, 2.299698319650534, -0.11110083421382877};
+	private int[] pieceHistory = new int[State.N_PIECES];
 
 	//implement this function to have a working system
 	public int pickMove(State s, int[][] legalMoves, double[] weights) {
 
+		pieceHistory[s.nextPiece]++;
+
 		// Serialize our state
-		SerializedState state = new SerializedState(s);
+		SerializedState state = new SerializedState(s, pieceHistory);
 
 		// Pick the move with highest valuation
 		return expectimax(state, legalMoves, weights, 1);
@@ -60,7 +63,7 @@ public class PlayerSkeleton {
 			return IntStream.range(0, State.N_PIECES)
 					.parallel()
 					.boxed()
-					.map(piece -> new SerializedState(s.field, s.top, s.turn, piece, s.lost, s.cleared))
+					.map(piece -> new SerializedState(s.field, s.top, s.turn, piece, s.pieceHistory,s.lost, s.cleared))
 					.map(state -> expectimax(state, weights, depth, true))
 					.reduce(0.0, Double::sum) / State.N_PIECES;
 		}
@@ -73,7 +76,7 @@ public class PlayerSkeleton {
 
 		double valuation = 0;
 
-		valuation += (getHighestCol(s) - getLowestCol(s)) * weights[2];
+		valuation += (getHighestCol(s) -getLowestCol(s)) * weights[2];
 		valuation += getHolesCount(s.field, s.top) * weights[3];
 		valuation += rowTransitions(s.field) * weights[0];
 		valuation += getWellSums(s.field) * weights[5] ;
@@ -262,7 +265,7 @@ public class PlayerSkeleton {
 		//check if game ended
 		if(height+pHeight[nextPiece][orient] >= ROWS) {
 			lost = true;
-			return new SerializedState(field, top, followingPiece, turn + 1, true, cleared);
+			return new SerializedState(field, top, followingPiece, turn + 1, s.pieceHistory, true, cleared);
 		}
 
 
@@ -310,7 +313,7 @@ public class PlayerSkeleton {
 			}
 		}
 
-		return new SerializedState(field, top, turn + 1, followingPiece, lost, cleared);
+		return new SerializedState(field, top, turn + 1, followingPiece, s.pieceHistory, lost, cleared);
 	}
 
 	public static void main(String[] args) {
@@ -340,30 +343,35 @@ class SerializedState {
 	final int nextPiece;
 	final boolean lost;
 	final int cleared;
+	final int[] pieceHistory;
 
 	SerializedState() {
 		this(new int[State.ROWS][State.COLS],
 				new int[State.COLS],
 				0,
 				randomPiece(),
+				new int[State.N_PIECES],
 				false,
-				0);
+				0
+				);
 	}
 
-	SerializedState(int[][] field, int[] top, int turn, int nextPiece, boolean lost, int cleared) {
+	SerializedState(int[][] field, int[] top, int turn, int nextPiece, int[] pieceHistory, boolean lost, int cleared) {
 		this.field = field;
 		this.top = top;
 		this.turn = turn;
 		this.nextPiece = nextPiece;
 		this.lost = lost;
 		this.cleared = cleared;
+		this.pieceHistory = pieceHistory;
 	}
 
-	SerializedState(State s) {
-		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), s.lost, s.getRowsCleared());
+	SerializedState(State s,  int[] pieceHistory) {
+		this(s.getField(), s.getTop(), s.getTurnNumber(), s.getNextPiece(), pieceHistory, s.lost, s.getRowsCleared());
 	}
 
 	public static int randomPiece() {
 		return (int) (Math.random() * State.N_PIECES);
 	}
 }
+

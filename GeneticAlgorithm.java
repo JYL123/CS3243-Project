@@ -7,7 +7,7 @@ import java.util.stream.IntStream;
 
 public class GeneticAlgorithm {
     private static ArrayList<double[]> population;
-    private static int populationSize = 6;                         ;
+    private static int populationSize = 1;                         ;
     private static int numberOfFeatures = 6; //highestCol and lowestCol are replaced by heightDifference
     /*0: rowTransitions 1: columnTransitions 2: heightDifferenceWeight 3: holesWeight 4: rowsCleared 5: wells*/
     //DEFAULT_WEIGHTS = {-1.3343042352708279, -0.7720367230689456, -0.0153739588059979, -0.8663918638956187, 1.9153960163441597, -0.48611250378933557};
@@ -28,6 +28,10 @@ public class GeneticAlgorithm {
                     double[] weights =  new double[numberOfFeatures];
                     for (int j = 0; j< weights.length; j++) {weights[j] = Math.random() * heuristic[j];}
                     population.add(weights);
+
+                    for(int m = 0; m < numberOfFeatures; m++) {
+                        System.out.print( " " + weights[m]);
+                    }
                 });
         return population;
     }
@@ -38,9 +42,12 @@ public class GeneticAlgorithm {
      */
     private static double evaluateIndividual (double[] individual, State s) {
         double score = 0;
+        new TFrame(s);
         PlayerSkeleton p = new PlayerSkeleton();
         while(!s.hasLost()) {
             s.makeMove(p.pickMove(s,s.legalMoves(), individual));
+            s.draw();
+            s.drawNext(0,0);
             if(s.getRowsCleared() % 1000 ==0 && s.getRowsCleared() != 0) System.out.println(s.getRowsCleared() + " rows cleared.");
         }
         score = s.getRowsCleared();
@@ -85,10 +92,10 @@ public class GeneticAlgorithm {
         IntStream.range(0, populationSize)
                 .parallel()
                 .forEach(i -> {
-                   if(evaluationScore.get(i) >= benchmark) {
-                       parents.add(population.get(i));
-                       System.out.println("score seleceted: " + evaluationScore.get(i));
-                   }
+                    if(evaluationScore.get(i) >= benchmark) {
+                        parents.add(population.get(i));
+                        System.out.println("score seleceted: " + evaluationScore.get(i));
+                    }
                 });
 
         return parents;
