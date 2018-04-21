@@ -1,6 +1,5 @@
 import java.awt.Color;
-
-
+import java.util.Random;
 
 
 public class State {
@@ -155,7 +154,6 @@ public class State {
 	//constructor
 	public State() {
 		nextPiece = randomPiece();
-
 	}
 	
 	//random integer, returns 0-6
@@ -244,10 +242,10 @@ public class State {
 	
 
 		//pick a new piece
+//		Random random = new Random();
+//		nextPiece = random.nextBoolean()? 5 : 6;
 		nextPiece = randomPiece();
-		
 
-		
 		return true;
 	}
 	
