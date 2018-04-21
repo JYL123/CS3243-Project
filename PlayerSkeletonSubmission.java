@@ -328,11 +328,11 @@ public class PlayerSkeletonSubmission {
             s.draw();
             s.drawNext(0,0);
             System.out.println("You have completed "+s.getRowsCleared()+" rows.");
-//			try {
-//				Thread.sleep(300);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
+			try {
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
         }
         System.out.println("You have completed "+s.getRowsCleared()+" rows.");
     }
@@ -381,28 +381,22 @@ class SerializedState {
 class ParallelGeneticAlgorithm {
 
     private static double[] HEURISTICS = {-1, -1, -1, -1, 5, -1};
-    private static int populationSize = 25;
-    private static double parentsSelectionRatio = 0.5;
-    private static int numberOfFeatures = 6;
-    private static double threadhold = 0.1;
 
     ArrayList<double[]> population = new ArrayList<>();
-    private final int childrenCount;
-    private final int parentCount;
     private final int simulationsPerChild;
     private final double generations;
-    private final double survivalRate;
-    private final double matingRate;
-    private final double mutationProbability;
+    private final double threadhold;
+    private final double parentsSelectionRatio;
+    private final int populationSize;
+    private final int numberOfFeatures;
 
-    ParallelGeneticAlgorithm(int childrenCount, int parentCount, int simulationsPerChild, int generations, double survivalRate, double matingRate, double mutationProbability) {
-        this.childrenCount = childrenCount;
-        this.parentCount = parentCount;
+    ParallelGeneticAlgorithm(int simulationsPerChild, int generations, int populationSize, int numberOfFeatures, double threadhold, double parentsSelectionRatio) {
         this.simulationsPerChild = simulationsPerChild;
+        this.parentsSelectionRatio = parentsSelectionRatio;
         this.generations = generations;
-        this.survivalRate = survivalRate;
-        this.matingRate = matingRate;
-        this.mutationProbability = mutationProbability;
+        this.threadhold = threadhold;
+        this.populationSize = populationSize;
+        this.numberOfFeatures =numberOfFeatures;
 
         // Initialise children
         for (int i = 0; i < populationSize; i++) {
@@ -458,7 +452,7 @@ class ParallelGeneticAlgorithm {
      * children will make up another 50% of the population
      * return an updated population
      */
-    public static ArrayList<double[]> evolve (ArrayList<double[]> population, List<Double> evaluationScore) {
+    public ArrayList<double[]> evolve (ArrayList<double[]> population, List<Double> evaluationScore) {
         return updatePopulation(selectParent(evaluationScore, population), evaluationScore);
     }
 
@@ -466,7 +460,7 @@ class ParallelGeneticAlgorithm {
      * top parentsSelectionRatio (a percentage) of the population is chosen for evolution
      * return the ids of parents
      */
-    private static List<double[]> selectParent(List<Double> evaluationScore, ArrayList<double[]> population) {
+    private List<double[]> selectParent(List<Double> evaluationScore, ArrayList<double[]> population) {
         // certain percentage of population
         List<double[]> parents = new ArrayList<double[]>();
 
@@ -487,7 +481,7 @@ class ParallelGeneticAlgorithm {
         return parents;
     }
 
-    private static ArrayList<double[]> updatePopulation(List<double[]> parents, List<Double> fitness) {
+    private ArrayList<double[]> updatePopulation(List<double[]> parents, List<Double> fitness) {
         int childrenNum = populationSize - parents.size();
         ArrayList<double[]> newPopulation = new ArrayList<double[]>();
 
@@ -527,7 +521,7 @@ class ParallelGeneticAlgorithm {
     }
 
     /* Swap Mutation */
-    private static double[] mutation (double[] child) {
+    private double[] mutation (double[] child) {
         /* swap */
         int randomIndex1 = (int) Math.floor(Math.random() * (numberOfFeatures));
         int randomIndex2 = (int) Math.floor(Math.random() * (numberOfFeatures));
@@ -539,7 +533,7 @@ class ParallelGeneticAlgorithm {
     }
 
     /* cross over */
-    private static double[] crossover (double[] momGenome, double[] dadGenome) {
+    private double[] crossover (double[] momGenome, double[] dadGenome) {
         Random random = new Random();
         double[] child = new double[momGenome.length];
         IntStream.range(0, momGenome.length)
@@ -552,7 +546,7 @@ class ParallelGeneticAlgorithm {
     /*
     * Tournament selection
     * */
-    private static List<double[]> tournamentSelection(List<Double> fitness, List<double[]> parents) {
+    private List<double[]> tournamentSelection(List<Double> fitness, List<double[]> parents) {
         List<double[]> selParents = new ArrayList<>();
         double betterFitness = Double.NEGATIVE_INFINITY;
         int better = 0;
@@ -620,7 +614,7 @@ class ParallelGeneticAlgorithm {
     public static void main(String[] args) {
         State s = new State();
 
-        ParallelGeneticAlgorithm PS = new ParallelGeneticAlgorithm(50, 2, 5, 100, 0.25, 0.5, 0.1);
+        ParallelGeneticAlgorithm PS = new ParallelGeneticAlgorithm(5, 25, 25, 6, 0.1, 0.5);
         PS.run();
     }
 }

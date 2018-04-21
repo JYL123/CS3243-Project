@@ -1,11 +1,14 @@
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class PlayerSkeleton {
 
+	//{-0.038865, -0.038865, -0.053251, -0.560938, 0.838108, -0.386368, }
+	//-0.5409023035972038, -0.5779452238352727, -0.08382226928735714, -0.7237267127345023, 2.299698319650534, -0.11110083421382877
 	public final static double[] DEFAULT_WEIGHTS = {-0.5409023035972038, -0.5779452238352727, -0.08382226928735714, -0.7237267127345023, 2.299698319650534, -0.11110083421382877};
 	private int[] pieceHistory = new int[State.N_PIECES];
 
@@ -324,6 +327,7 @@ public class PlayerSkeleton {
 			s.makeMove(p.pickMove(s,s.legalMoves(),DEFAULT_WEIGHTS));
 			s.draw();
 			s.drawNext(0,0);
+			if(s.getRowsCleared() % 1000 == 0 && s.getRowsCleared() != 0)
 			System.out.println("You have completed "+s.getRowsCleared()+" rows.");
 //			try {
 //				Thread.sleep(300);
@@ -371,6 +375,9 @@ public class PlayerSkeleton {
 //	}
 //
 //	public static int randomPiece() {
+////		Random random = new Random();
+////		int next = random.nextBoolean() ? 5 :6;
+////		return next;
 //		return (int) (Math.random() * State.N_PIECES);
 //	}
 //}

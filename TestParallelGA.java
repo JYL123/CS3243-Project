@@ -17,8 +17,7 @@ public class TestParallelGA {
     private static double parentsSelectionRatio = 0.5;
     private static int numberOfFeatures = 6;
     private static double threadhold = 0.1;
-    private double bestFitness = 0;
-    private double[] bestWeights = new double[numberOfFeatures];
+    private static int ROWCLEARINDEX = 4;
 
     ArrayList<double[]> population = new ArrayList<>();
     private final int childrenCount;
@@ -28,6 +27,8 @@ public class TestParallelGA {
     private final double survivalRate;
     private final double matingRate;
     private final double mutationProbability;
+    private double bestFitness = 0;
+    private double[] bestWeight;
 
     TestParallelGA(int childrenCount, int parentCount, int simulationsPerChild, int generations, double survivalRate, double matingRate, double mutationProbability) {
         this.childrenCount = childrenCount;
@@ -43,7 +44,6 @@ public class TestParallelGA {
             double[] weights = new double[numberOfFeatures];
             for (int j = 0; j < weights.length; j++) {
                 weights[j] = Math.random() * HEURISTICS[j];
-                //weights[j] = MIN_WEIGHTS[j] + Math.random() * (MAX_WEIGHTS[j] - MIN_WEIGHTS[j]);
             }
 
             population.add(weights);
@@ -161,15 +161,19 @@ public class TestParallelGA {
         return newPopulation;
     }
 
-    //TODO: avoid mutating on rowsCleared? it will not be selected into the next round of generation if the performance is poor.
+    //swap mutation should not apply to rowClear the only positive weight
     /* Swap Mutation */
     private static double[] mutation (double[] child) {
         /* swap */
         int randomIndex1 = (int) Math.floor(Math.random() * (numberOfFeatures));
         int randomIndex2 = (int) Math.floor(Math.random() * (numberOfFeatures));
-        double temp = child[randomIndex1];
-        child[randomIndex1] = child[randomIndex2];
-        child[randomIndex2] = temp;
+        if(randomIndex1 != ROWCLEARINDEX && randomIndex2 != ROWCLEARINDEX ) {
+            double temp = child[randomIndex1];
+            child[randomIndex1] = child[randomIndex2];
+            child[randomIndex2] = temp;
+        } else {
+            child[ROWCLEARINDEX] = Math.random() * HEURISTICS[ROWCLEARINDEX];
+        }
 
         return child;
     }
@@ -250,13 +254,25 @@ public class TestParallelGA {
                 System.out.printf("%f, ", w);
             }
             System.out.println("}");
+
+            if(maxFitness > bestFitness) {
+                bestFitness = maxFitness;
+                bestWeight = population.get(maxIndex);
+            }
         }
+
+        System.out.printf("Best Fitness: %f\n", bestFitness);
+        System.out.print("Best Weights: {");
+        for (double w : bestWeight) {
+            System.out.printf("%f, ", w);
+        }
+        System.out.println("}");
     }
 
     public static void main(String[] args) {
         State s = new State();
 
-        TestParallelGA ga = new TestParallelGA(50, 2, 5, 100, 0.25, 0.5, 0.1);
+        TestParallelGA ga = new TestParallelGA(50, 2, 5, 500, 0.25, 0.5, 0.1);
         ga.run();
     }
 }

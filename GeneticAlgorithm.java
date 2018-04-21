@@ -7,16 +7,16 @@ import java.util.stream.IntStream;
 
 public class GeneticAlgorithm {
     private static ArrayList<double[]> population;
-    private static int populationSize = 1;                         ;
+    private static int populationSize = 10;                         ;
     private static int numberOfFeatures = 6; //highestCol and lowestCol are replaced by heightDifference
     /*0: rowTransitions 1: columnTransitions 2: heightDifferenceWeight 3: holesWeight 4: rowsCleared 5: wells*/
     //DEFAULT_WEIGHTS = {-1.3343042352708279, -0.7720367230689456, -0.0153739588059979, -0.8663918638956187, 1.9153960163441597, -0.48611250378933557};
-    private static double[] heuristic = {-1, -1, -1, -1, 5, -1};
+    private static double[] heuristic = {-1, -1, -1, -1, 10, -1};
     private static double threadhold = 0.1;
     private static double parentsSelectionRatio = 0.5;
     private static double[] bestWeights = new double[numberOfFeatures];
     private static double bestFitness = Integer.MIN_VALUE;
-    private static int generations = 6;
+    private static int generations = 10;
 
     public static ArrayList<double[]> initializePopulation () {
         population = new ArrayList<>(populationSize);
@@ -107,7 +107,6 @@ public class GeneticAlgorithm {
 
         //add parents in newPopulation
         IntStream.range(0, parents.size())
-                .parallel()
                 .forEach(i -> {
                     newPopulation.add(parents.get(i));
                 });
@@ -158,7 +157,6 @@ public class GeneticAlgorithm {
         Random random = new Random();
         double[] child = new double[momGenome.length];
         IntStream.range(0, momGenome.length)
-                .parallel()
                 .forEach(i -> {
                     child[i] = random.nextBoolean() ? momGenome[i] : dadGenome[i];
                 });
