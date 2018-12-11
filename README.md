@@ -24,7 +24,7 @@ To implement our agent, we majorly utilized the following 2 algorithms:
 
 * [Expectimax](https://inst.eecs.berkeley.edu/~cs188/fa10/slides/FA10%20cs188%20lecture%208%20--%20utilities%20(6PP).pdf): this is for predicting 1 step ahead the next best allocation of the current teromino piece by evaluating all possible moves of the current piece using our [utility function](https://github.com/JYL123/Tetris/blob/master/README#L23).
 
-* Big data: we use [Java 8 parallel programming](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html) to scale up our search for a good set of weights. This implmentation shows [obvious improvement](https://github.com/JYL123/Tetris/blob/master/README#L30) in game playing.
+* Big data: we use [Java 8 parallel programming](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html) to scale up our search for a good set of weights. This implmentation shows [obvious improvement](https://github.com/JYL123/Tetris/blob/master/README.md#L30) in game playing.
 
 ## Performance
 * Parallel stream vs. Sequential stream
