@@ -18,11 +18,11 @@ These are the features identified for a single game state:
 6. ***Number of wells***: wells refer to groups of holes whose left and right cells have been completely filled
 
 
-## Implementation of agent
-To implement our agent, we majorly utilized the following 2 algorithms:
+## Implementation of the agent
+To implement our agent, we majorly utilized the following 3 approaches:
 * [Genetic algorithm](https://uk.mathworks.com/help/gads/what-is-the-genetic-algorithm.html): this is for selecting good sets of weights for each `features`, as shown above. The "good" set of weights is supposed to maximise the sum of products of wieghts and their corresponding feature values, which we call, `utility function`. There are other small details in our implementation, such as `swap mutation`, and `tournament selection`, etc. which please refer to [our report](https://github.com/JYL123/Tetris/blob/master/Report/Report.pdf).
 
-* [Expectimax](https://inst.eecs.berkeley.edu/~cs188/fa10/slides/FA10%20cs188%20lecture%208%20--%20utilities%20(6PP).pdf): this is for predicting 1 step ahead the next best allocation of the current teromino piece by evaluating all possible moves of the current piece using our [utility function](https://github.com/JYL123/Tetris/blob/master/README#L23).
+* [Expectimax](https://inst.eecs.berkeley.edu/~cs188/fa10/slides/FA10%20cs188%20lecture%208%20--%20utilities%20(6PP).pdf): this is for predicting 1 step ahead the next best allocation of the current teromino piece by evaluating all possible moves of the current piece using our `utility function` as defined above.
 
 * Big data: we use [Java 8 parallel programming](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html) to scale up our search for a good set of weights. This implmentation shows obvious improvement, as shown below, in the game play.
 
